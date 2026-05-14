@@ -54,6 +54,12 @@
 - 磁盘优化
 - 数据布局
 
+### OpenMP 程序优化
+
+### CUDA 程序优化
+
+### MPI 程序you'hua
+
 ## 2. 性能分析与优化
 
 ### 自顶向下微架构分析
@@ -158,16 +164,46 @@ $ perf report
 - 使用缓存友好的访问模式
 - 启用软件预取（ prefetcht0 ）
 
-### Intel VTune Profiler 中的 TMA
+### Intel VTune Profiler
 
+性能测试中，程序运行环境应与生产环境保持一致，待分析程序通常开启编译优化选项 `-O2/3`，同时开启调试信息选项 `-g`
 
+#### Performance Snapshot(ps)
+
+首先根据性能快照分析概览，程序运行时间可用作后续优化后的对比
+
+![analysis type](./assets/analysis_type.png)
+
+#### Hotspots(hs)
+
+热点分析处定位最耗时的函数，并定位到具体耗时语句；
+
+同时查看 CPU 使用率
+
+![top hotspots](./assets/top_hotspots.png)
+
+![Effective CPU Utilization Histogram](./assets/effective_cpu_utilization_histogram.png)
+
+![Performance Navigator](./assets/performance_navigator.png)
+
+#### Microarchitecture Exploration(ue)
+
+微架构分析即对应 TMA 中各指标
+
+![Summary](./assets/ue_01_sub_metrics.png)
 
 ## 3. 总结
 
+- 进行性能分析所使用程序应与实际生产环境保持一致，开启编译优化选项 `-O2/3`，`-g` 开启调试信息则为分析所必要
+-  
 
+## 4. 性能分析优化实例
+
+- 
 
 ## 参考
 
 - [CPU 微架构](https://www.bilibili.com/video/BV1a2421M7Tz)
 - [现代 CPU 性能分析与优化](https://github.com/dendibakh/perf-ninja)
 - [程序性能优化理论与方法](https://github.com/AdvancedCompiler/AdvancedCompiler)
+- [Intel® VTune™ Profiler User Guide](https://www.intel.com/content/www/us/en/docs/vtune-profiler/user-guide/2025-4/overview.html)
