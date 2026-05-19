@@ -1,0 +1,16 @@
+
+=== Start: [2026/05/19 21:15:31] === 
+Analysis started...
+Result file: /home/cc/Projects/Performance-Analysis-And-Tuning/memory_bound/loop_interchange_1/loop_interchage_1/e000/mp000/mp000.advixe 
+Found target process /home/cc/Projects/Performance-Analysis-And-Tuning/memory_bound/loop_interchange_1/build/lab (PID = 51990). Analysis started... 
+Loaded module: /home/cc/Projects/Performance-Analysis-And-Tuning/memory_bound/loop_interchange_1/build/lab. 
+Loaded module: /lib64/ld-linux-x86-64.so.2. 
+Loaded module: [vdso]. 
+Loaded module: /lib/x86_64-linux-gnu/libstdc++.so.6. 
+Loaded module: /lib/x86_64-linux-gnu/libm.so.6. 
+Loaded module: /lib/x86_64-linux-gnu/libgcc_s.so.1. 
+Loaded module: /lib/x86_64-linux-gnu/libc.so.6. 
+Application exit code: 0 
+Result file: /home/cc/Projects/Performance-Analysis-And-Tuning/memory_bound/loop_interchange_1/loop_interchage_1/e000/mp000/mp000.advixe 
+Analysis completed
+=== End: [2026/05/19 21:15:43] === 

@@ -18,8 +18,8 @@ static bool equals(const Matrix &a, const Matrix &b) {
             float error = std::abs(va - vb);
             if (error >= epsilon) {
                 std::cerr << "Result[" << i << ", " << j << "] = " << va
-                        << ". Expected[" << i << ", " << j << "] = " << vb
-                        << std::endl;
+                          << ". Expected[" << i << ", " << j << "] = " << vb
+                          << std::endl;
                 if (++errors >= maxErrors)
                     return false;
             }

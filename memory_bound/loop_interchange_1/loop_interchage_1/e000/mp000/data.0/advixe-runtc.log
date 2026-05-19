@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<log version="1.0" tool="runtool">
+
+<msg id="1" tool="runtool">
+  <type>log-start</type>
+  <arg>2026/05/19 21:15:31</arg>
+</msg>
+<msg id="2" tool="runtool">
+  <type>collector-starts</type>
+</msg>
+<msg id="3" tool="runtool">
+  <type>marker-file</type>
+  <arg>/home/cc/Projects/Performance-Analysis-And-Tuning/memory_bound/loop_interchange_1/loop_interchage_1/e000/mp000/mp000.advixe</arg>
+</msg>
+<msg id="4" tool="tc">
+  <type>START</type>
+  <severity>INFO</severity>
+  <timestamp>Tue May 19 21:15:31 2026</timestamp>
+</msg>
+<msg id="5" tool="tc">
+  <type>EXEC_OF_INTEREST</type>
+  <arg>/home/cc/Projects/Performance-Analysis-And-Tuning/memory_bound/loop_interchange_1/build/lab</arg>
+  <arg>51990</arg>
+  <severity>INFO</severity>
+  <timestamp>Tue May 19 21:15:31 2026</timestamp>
+</msg>
+<msg id="6" tool="tc">
+  <type>LOAD_MODULE</type>
+  <arg>/home/cc/Projects/Performance-Analysis-And-Tuning/memory_bound/loop_interchange_1/build/lab</arg>
+  <arg>0x6008e6750000</arg>
+  <arg>0x6008e67c3b67</arg>
+  <arg>1</arg>
+  <severity>INFO</severity>
+  <timestamp>Tue May 19 21:15:31 2026</timestamp>
+</msg>
+<msg id="7" tool="tc">
+  <type>LOAD_MODULE</type>
+  <arg>/lib64/ld-linux-x86-64.so.2</arg>
+  <arg>0x71d197af7000</arg>
+  <arg>0x71d197b302d7</arg>
+  <arg>2</arg>
+  <severity>INFO</severity>
+  <timestamp>Tue May 19 21:15:31 2026</timestamp>
+</msg>
+<msg id="8" tool="tc">
+  <type>LOAD_MODULE</type>
+  <arg>[vdso]</arg>
+  <arg>0x71d197af5000</arg>
+  <arg>0x71d197af68aa</arg>
+  <arg>3</arg>
+  <severity>INFO</severity>
+  <timestamp>Tue May 19 21:15:31 2026</timestamp>
+</msg>
+<msg id="9" tool="tc">
+  <type>LOAD_MODULE</type>
+  <arg>/lib/x86_64-linux-gnu/libstdc++.so.6</arg>
+  <arg>0x71d181e00000</arg>
+  <arg>0x71d18207d13f</arg>
+  <arg>4</arg>
+  <severity>INFO</severity>
+  <timestamp>Tue May 19 21:15:31 2026</timestamp>
+</msg>
+<msg id="10" tool="tc">
+  <type>LOAD_MODULE</type>
+  <arg>/lib/x86_64-linux-gnu/libm.so.6</arg>
+  <arg>0x71d181d17000</arg>
+  <arg>0x71d181dff017</arg>
+  <arg>5</arg>
+  <severity>INFO</severity>
+  <timestamp>Tue May 19 21:15:31 2026</timestamp>
+</msg>
+<msg id="11" tool="tc">
+  <type>LOAD_MODULE</type>
+  <arg>/lib/x86_64-linux-gnu/libgcc_s.so.1</arg>
+  <arg>0x71d1820bd000</arg>
+  <arg>0x71d1820ea3a7</arg>
+  <arg>6</arg>
+  <severity>INFO</severity>
+  <timestamp>Tue May 19 21:15:31 2026</timestamp>
+</msg>
+<msg id="12" tool="tc">
+  <type>LOAD_MODULE</type>
+  <arg>/lib/x86_64-linux-gnu/libc.so.6</arg>
+  <arg>0x71d181a00000</arg>
+  <arg>0x71d181c11d8f</arg>
+  <arg>7</arg>
+  <severity>INFO</severity>
+  <timestamp>Tue May 19 21:15:31 2026</timestamp>
+</msg>
+<msg id="13" tool="runtool">
+  <type>app-exit-code</type>
+  <arg>0</arg>
+</msg>
+<msg id="14" tool="runtool">
+  <type>marker-file</type>
+  <arg>/home/cc/Projects/Performance-Analysis-And-Tuning/memory_bound/loop_interchange_1/loop_interchage_1/e000/mp000/mp000.advixe</arg>
+</msg>
+<msg id="15" tool="runtool">
+  <type>collector-done</type>
+</msg>
+<msg id="16" tool="runtool">
+  <type>log-end</type>
+  <arg>2026/05/19 21:15:43</arg>
+</msg>
+
+</log>
+
