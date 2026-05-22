@@ -17,8 +17,7 @@ static void bench1(benchmark::State &state) {
         decltype(Grayscale::data) temp(new uint8_t[image.size]);
         if (result && temp) {
             for (auto _ : state) {
-                blur(result.get(), image.data.get(), image.width, image.height,
-                    temp.get());
+                blur(result.get(), image.data.get(), image.width, image.height, temp.get());
                 benchmark::DoNotOptimize(image);
             }
 
@@ -46,7 +45,7 @@ int main(int argc, char **argv) {
 
     ::benchmark::Initialize(&argc, argv);
     if (::benchmark::ReportUnrecognizedArguments(argc - mandatoryArgumentsCount,
-                                                argv + mandatoryArgumentsCount))
+                                                 argv + mandatoryArgumentsCount))
         return 1;
     ::benchmark::RunSpecifiedBenchmarks();
     return 0;
