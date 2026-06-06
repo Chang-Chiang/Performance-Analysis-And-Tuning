@@ -6,39 +6,25 @@
 
 ## 一. Basis 性能优化
 
-### 1. 性能度量指标
+### 1. [性能度量指标](docs/performance_metrics.md)
 
-详见 [性能度量指标](docs/performance_metrics.md)
+### 2. [性能分析测量](docs/performance_analysis.md)
 
-### 2. 性能分析测量
+### 3. [硬件配置与调优](docs/hardware.md)
 
-详见 [性能分析测量](docs/performance_analysis.md)
+### 4. [编译器概述](docs/compiler.md)
 
-### 3. 了解一下自己的硬件
+### 5. [程序编写优化](docs/program_optimization.md)
 
-详见 [硬件配置与调优](docs/hardware.md)
+### 6. [单核优化](docs/single_core_optimization.md)
 
-### 4. 编译器概述
+### 7. [访存优化](docs/memory_optimization.md)
 
-详见 [编译器概述](docs/compiler.md)
+### 8. [OpenMP 程序优化](docs/openmp_optimization.md)
 
-### 5. 程序编写优化
+### 9. [CUDA 程序优化](docs/cuda_optimization.md)
 
-详见 [程序编写优化](docs/program_optimization.md)
-
-### 6. 单核优化
-
-详见 [单核优化](docs/single_core_optimization.md)
-
-### 7. 访存优化
-
-详见 [访存优化](docs/memory_optimization.md)
-
-### 8. OpenMP 程序优化
-
-### 9. CUDA 程序优化
-
-### 10. MPI 程序优化
+### 10. [MPI 程序优化](docs/mpi_optimization.md)
 
 ## 二. TMA, 性能分析与优化
 
