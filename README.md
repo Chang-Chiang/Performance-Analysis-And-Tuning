@@ -4,200 +4,54 @@
 个人学习过程，总是需经过三个阶段：首先对知识整体有一个概览；在此基础上，针对问题利用已知的理论进行分析；经过对知识实际的使用，对其加深理解。
 故该文以上所述思路进行梳理，在第一部分罗列参考资料中所总结的性能优化手段；第二部分，按实际项目开发过程中，性能优化过程进行展开；第三部分性能分析进行总结。
 
-## 1. 性能优化手段
+## 一. Basis 性能优化
 
-### 编译器优化
+### 1. 性能度量指标
 
-- 内联优化
-- 循环优化
-- 向量化优化
-- 并行化优化
-- 数据预取优化
+详见 [性能度量指标](docs/performance_metrics.md)
 
-### 程序编写优化
+### 2. 性能分析测量
 
-- 算法优化
-- 数据结构优化
-- 过程级优化
-    - 别名消除
-    - 常数传播
-    - 传参优化
-    - 内联优化
-    - 过程克隆
-    - 全局变量优化
-- 循环级优化
-    - 循环不变量外提
-    - 循环展开和压紧
-    - 循环合并
-    - 循环分段
-    - 循环分块
-    - 循环交换
-    - 循环分裂
-    - 循环倾斜
-- 语句级优化
-    - 删除冗余语句
-    - 代数变换
-    - 去除相关性
-    - 公共子表达式优化
-    - 分支语句优化
+详见 [性能分析测量](docs/performance_analysis.md)
 
-### 单核优化
+### 3. 了解一下自己的硬件
 
-- 指令级并行
-- 数据级并行
+详见 [硬件配置与调优](docs/hardware.md)
 
-### 访存优化
+### 4. 编译器概述
 
-- 寄存器优化
-- 缓存优化
-- 内存优化
-- 磁盘优化
-- 数据布局
+详见 [编译器概述](docs/compiler.md)
 
-### OpenMP 程序优化
+### 5. 程序编写优化
 
-### CUDA 程序优化
+详见 [程序编写优化](docs/program_optimization.md)
 
-### MPI 程序you'hua
+### 6. 单核优化
 
-## 2. 性能分析与优化
+详见 [单核优化](docs/single_core_optimization.md)
 
-### 自顶向下微架构分析
+### 7. 访存优化
 
-TMA: Top-Down Microarchitecture Analysis, 自顶向下微架构分析。
+详见 [访存优化](docs/memory_optimization.md)
 
-“流水线槽（pipeline slot）”是 Intel Top-Down 模型里人为定义的一个**“最小可观察时间单元”**，用来把“CPU 每周期到底干了多少活”量化成可计数的粒度。一句话：一个 slot 就是“一个物理核心在一个时钟周期内所能发射的一条 μOP 的位置”。
+### 8. OpenMP 程序优化
 
-流水线槽划分为四种状态：
+### 9. CUDA 程序优化
 
-- Retiring: uOp 正常退休，表示执行效率高	
-- Bad Speculation: uOp 因分支预测错误等被丢弃，浪费资源	
-- Frontend Bound: 前端无法提供足够 uOp，流水线空转	
-- Backend Bound: 后端资源不足，无法执行 uOp，流水线停滞	
+### 10. MPI 程序优化
 
-CPU 前端：主要目的是有效地从内存中获取指令并解码，将准备好的指令送入 CPU 后端。
+## 二. TMA, 性能分析与优化
 
-CPU 后端：负责指令的实际执行。
+详见 [TMA 性能分析与优化](docs/tma.md)
 
----
+## 三. 总结
 
-![TMA 层级结构](./assets/TMA_hierarchy.jpeg)
-
-TMA 分析流程流程，自顶向下：
-
-1. 一级分类
-
-   - Retiring
-   - Bad Speculation
-   - Frontend Bound
-   - Backend Bound
-
-2. 二级分类
-
-   - Backend Bound
-       - Memory Bound, 内存访问延迟
-       - Core Bound, 执行单元饱和、指令依赖
-   - Frontend Bound
-       - Fetch Latency
-       - Fetch Bandwidth
-
-3. 三级分类，具体的微架构事件
-
-    - Backend Bound
-       - Memory Bound
-           - Stores Bound
-           - L1 Bound
-           - ···
-       - Core Bound
-           - Divider
-           - ···
-   - Frontend Bound
-       - Fetch Latency
-           - iTLB Miss
-           - i-Cache Miss
-           - Branch Resteers
-           - ···
-       - Fetch Bandwidth
-
-### Linux Perf 中的 TMA
-
-#### 一级分析
-
-```shell
-$ perf stat --topdown -a -- taskset -c 0 ./benchmark
-Retiring: 25% | Bad Speculation: 2% | Frontend Bound: 8% | Backend Bound: 65%
-```
-
-瓶颈在 Backend Bound
-
-#### 二级分析
-
-```shell
-$ toplev -l2 --core S0-C0 -- ./benchmark
-Backend_Bound.Memory_Bound: 52%
-Backend_Bound.Core_Bound: 13%
-```
-
-主要瓶颈是 Memory Bound
-
-#### 三级分析
-
-```shell
-$ toplev -l3 --core S0-C0 -- ./benchmark
-Memory_Bound.L3_Bound: 38%
-Memory_Bound.DRAM_Bound: 14%
-```
-
-L3 缓存未命中是主因
-
-#### 代码定位
-
-```shell
-$ perf record -e MEM_LOAD_RETIRED.L3_MISS ./benchmark
-$ perf report
-```
-
-发现函数  foo()  中某数组访问模式导致跳步访问（stride access），破坏缓存局部性
-
-优化建议：
-- 重构数据结构（如结构体数组 → 数组结构体）
-- 使用缓存友好的访问模式
-- 启用软件预取（ prefetcht0 ）
-
-### Intel VTune Profiler
-
-性能测试中，程序运行环境应与生产环境保持一致，待分析程序通常开启编译优化选项 `-O2/3`，同时开启调试信息选项 `-g`
-
-#### Performance Snapshot(ps)
-
-首先根据性能快照分析概览，程序运行时间可用作后续优化后的对比
-
-![analysis type](./assets/analysis_type.png)
-
-#### Hotspots(hs)
-
-热点分析处定位最耗时的函数，并定位到具体耗时语句；
-
-同时查看 CPU 使用率
-
-![top hotspots](./assets/top_hotspots.png)
-
-![Effective CPU Utilization Histogram](./assets/effective_cpu_utilization_histogram.png)
-
-![Performance Navigator](./assets/performance_navigator.png)
-
-#### Microarchitecture Exploration(ue)
-
-微架构分析即对应 TMA 中各指标
-
-![Summary](./assets/ue_01_sub_metrics.png)
-
-## 3. 总结
+> 自己做电子笔记总是力求简洁明了，但貌似也因此，逐渐缺失了言语的组织与表达能力，实际敲字的时候多少还是有点话痨。在当下快节奏的环境下，或许呈现给别人看需要精炼，但自己的思考过程及学习过程中的一些想法仍是值得记录，过程中才会涌现更多的问题，而产生问题的过程在这个 AI 时代对于个人的提升显得更为重要了。
 
 - 进行性能分析所使用程序应与实际生产环境保持一致，开启编译优化选项 `-O2/3`，`-g` 开启调试信息则为分析所必要
--  
+- 
 
-## 4. 性能分析优化实例
+## 四. 性能分析优化实例
 
 - 
 
@@ -205,5 +59,6 @@ $ perf report
 
 - [CPU 微架构](https://www.bilibili.com/video/BV1a2421M7Tz)
 - [现代 CPU 性能分析与优化](https://github.com/dendibakh/perf-ninja)
+- [](https:github.com/gongyiling/cpp_lecture)
 - [程序性能优化理论与方法](https://github.com/AdvancedCompiler/AdvancedCompiler)
 - [Intel® VTune™ Profiler User Guide](https://www.intel.com/content/www/us/en/docs/vtune-profiler/user-guide/2025-4/overview.html)
