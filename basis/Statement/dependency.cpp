@@ -1,83 +1,42 @@
-// 去除相关性
-// 依赖关系分为 控制依赖、数据依赖
+// 依赖分析 (Dependency Analysis)
+//
+// 什么是依赖分析？
+//   分析程序中语句之间的依赖关系，确定哪些操作可以并行执行。
+//
+// 依赖类型：
+//   1. 真依赖 (RAW, Read After Write) — 读取之前写入的数据
+//   2. 反依赖 (WAR, Write After Read) — 写入之前读取的数据
+//   3. 输出依赖 (WAW, Write After Write) — 写入之前写入的数据
+//
+// 本例分析：
+//   for (i = 1; i < N; i++) {
+//       if (a[i] > x) {  // S1：读取 x
+//           x = a[i];    // S2：写入 x
+//       }
+//   }
+//
+//   S1 和 S2 之间存在循环携带依赖：
+//     - S1 读取 x（来自上一次迭代的 S2 或初始值）
+//     - S2 写入 x（供下一次迭代的 S1 使用）
+//     - 这是真依赖 (RAW)，无法并行化
+//
+// 编译命令：
+//   g++ -O2 dependency.cpp -o dependency
 
-#include <stdlib.h>
 #include <stdio.h>
 
-int main_1()
-{
-    int a[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+int main() {
+    int a[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     int x = a[0];
     int N = sizeof(a) / sizeof(int);
-    for (int i = 1; i < N; i++)
-    {
-        if (a[i] > x) 
-        {
-            x = a[i];
+
+    // 循环携带依赖：x 在迭代之间传递
+    for (int i = 1; i < N; i++) {
+        if (a[i] > x) {  // S1：读取 x（真依赖 RAW）
+            x = a[i];    // S2：写入 x
         }
     }
-    printf("x = %d", x);
-}
 
-int main_2()
-{
-    int A[10] = { 1, 23, 4, 26, 3, 2, 6, 7, 8, 5 };
-    int N = sizeof(A) / sizeof(int);
-    int B[10] = { 0 };
-
-    // int T;
-    // for (int i = 1; i < N; i++)
-    // {
-    //     T = A[i];
-    //     A[i] = B[i];
-    //     B[i] = T;
-    // }
-
-    // 标量扩展, 消除数据依赖
-    int T[N];
-    for (int i = 0; i < N; i++)
-    {
-        T[i] = A[i];
-        A[i] = B[i];
-        B[i] = T[i];
-    }
-}
-
-int main_3()
-{
-    int a = 3, b = 0;
-    int T = 2;
-    int y = T + T;
-
-    // T = a - b;
-    // int z = T * T;
-
-    // 标量重命名
-    int T1 = a - b;
-    int z = T1 * T1;
-}
-
-#define N 10
-int main()
-{
-    int A[N] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-    int B[N] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-    int Y[N] = { 0 };
-    int X = 1, Z = 1, C = 1;
-
-    // for (int i = 1; i < N; i++)
-    // {
-    //     A[i] = A[i - 1] + X;
-    //     Y[i] = A[i] + Z;
-    //     A[i] = B[i] + C;
-    // }
-
-    // 数组重命名
-    int A1[N] = { 0 };
-    for (int i = 1; i < N; i++)
-    {
-        A1[i] = A[i - 1] + X;
-        Y[i] = A1[i] + Z;
-        A[i] = B[i] + C;
-    }
+    printf("Max value: x = %d\n", x);
+    return 0;
 }
