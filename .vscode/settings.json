@@ -1,4 +1,8 @@
 {
-    "cmake.sourceDirectory": "/home/dev/Projects/Performance-Analysis-And-Tuning",
-    "editor.codeActionsOnSave": {}
+    "[json]": {
+        "editor.formatOnSave": false
+    },
+    "[jsonc]": {
+        "editor.formatOnSave": false
+    }
 }
