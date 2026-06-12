@@ -1,5 +1,33 @@
 # CUDA 程序优化
 
+- [CUDA 程序优化](#cuda-程序优化)
+  - [1. CUDA 编程简介](#1-cuda-编程简介)
+    - [1.1 什么是 CUDA](#11-什么是-cuda)
+    - [1.2 常用 CUDA 运行时函数](#12-常用-cuda-运行时函数)
+    - [1.3 CUDA 程序编写示例](#13-cuda-程序编写示例)
+    - [1.4 CUDA 版矩阵乘法](#14-cuda-版矩阵乘法)
+  - [2. 线程结构优化](#2-线程结构优化)
+    - [2.1 线程组织优化](#21-线程组织优化)
+    - [2.2 线程布局优化](#22-线程布局优化)
+  - [3. 分支优化](#3-分支优化)
+    - [3.1 基本原理](#31-基本原理)
+    - [3.2 并行归约中的分支问题](#32-并行归约中的分支问题)
+    - [3.3 性能分析](#33-性能分析)
+  - [4. 访存优化](#4-访存优化)
+    - [4.1 全局内存优化](#41-全局内存优化)
+    - [4.2 共享内存优化](#42-共享内存优化)
+    - [4.3 避免 Bank 冲突](#43-避免-bank-冲突)
+    - [4.4 高速缓存优化](#44-高速缓存优化)
+  - [5. 数据预取](#5-数据预取)
+    - [5.1 基本原理](#51-基本原理)
+    - [5.2 代码实现](#52-代码实现)
+    - [5.3 性能分析](#53-性能分析)
+  - [6. 循环展开](#6-循环展开)
+    - [6.1 基本原理](#61-基本原理)
+    - [6.2 代码实现](#62-代码实现)
+    - [6.3 性能分析](#63-性能分析)
+  - [总结](#总结)
+
 ## 1. CUDA 编程简介
 
 ### 1.1 什么是 CUDA
@@ -137,7 +165,7 @@ void MatrixMulOnHost(float *A, float *B, float *C, int width) {
 __global__ void MatrixMulKernel(float* Ad, float* Bd, float* Cd, int width) {
     int offset = threadIdx.x;
     int row = offset / width;
-    int col = offset % (width - 1);
+    int col = offset % width;
     float sum = 0;
     for (int i = 0; i < width; i++) {
         sum += Ad[row * width + i] * Bd[i * width + col];
@@ -176,7 +204,7 @@ nsys profile --stats=true ./matrixmul
 __global__ void MatrixMulKernel_multiblock(float* Ad, float* Bd, float* Cd, int width) {
     int tx = threadIdx.x + blockIdx.x * blockDim.x;
     int row = tx / width;
-    int col = tx % (width - 1);
+    int col = tx % width;
     float sum = 0;
     for (int k = 0; k < width; k++) {
         sum += Ad[row * width + k] * Bd[k * width + col];
@@ -419,17 +447,35 @@ __shared__ float tile[size_y][size_x];
 
 #### 示例：使用共享内存优化矩阵乘法
 
-选择 `grid(8,8) block(32,32)` 的线程布局，通过共享内存减少全局内存访问时延：
+选择 `grid(8,8) block(32,32)` 的线程布局，通过共享内存分块（tiling）减少全局内存访问时延。核心思路：将矩阵按 32×32 的块划分，每个线程块先将块内元素从全局内存加载至共享内存，再从共享内存中读取元素进行乘累加运算。
 
 ```c
-// 在核函数内静态开辟共享内存空间
-__shared__ float ldsa[1024];
-__shared__ float ldsb[1024];
+__global__ void MatrixMulShared(float* Ad, float* Bd, float* Cd, int width) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
 
-// 线程块内 1024 个线程将矩阵 A 和 B 中的 1024 个元素
-// 从全局内存转移至共享内存
-// 乘累加运算时从共享内存获取目标元素，减少全局内存访问时延
+    __shared__ float tileA[32][32];
+    __shared__ float tileB[32][32];
+
+    float sum = 0.0f;
+    // 按 32 宽度的块遍历，每次迭代加载一块到共享内存
+    for (int t = 0; t < width / 32; t++) {
+        // 线程块内所有线程协作加载数据至共享内存
+        tileA[threadIdx.y][threadIdx.x] = Ad[row * width + t * 32 + threadIdx.x];
+        tileB[threadIdx.y][threadIdx.x] = Bd[(t * 32 + threadIdx.y) * width + col];
+        __syncthreads();
+
+        // 从共享内存读取并累加
+        for (int k = 0; k < 32; k++) {
+            sum += tileA[threadIdx.y][k] * tileB[k][threadIdx.x];
+        }
+        __syncthreads();
+    }
+    Cd[row * width + col] = sum;
+}
 ```
+
+> **关键点**：每个线程块将全局内存访问从 `O(width)` 次降至 `O(width/32)` 次，乘累加运算全部基于共享内存完成，显著降低了全局内存访问时延。
 
 **测试结果（矩阵规模 1024×1024）：**
 
@@ -565,6 +611,46 @@ cudaError_t cudaFuncSetCacheConfig(const void* func, enum cudaFuncCache cacheCon
 - 循环体首次迭代：取 `ldsa[0~1023]`、`ldsb[0~1023]` 进行乘累加，同时将下一批元素搬运至 `ldsa[1024~2047]`、`ldsb[1024~2047]`
 - 通过数据搬运与运算指令的交叉执行，掩藏全局内存向共享内存数据搬运的耗时
 
+**核心代码框架：**
+
+```c
+__global__ void MatrixMulShared_preload(float* Ad, float* Bd, float* Cd, int width) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    int tx = threadIdx.x, ty = threadIdx.y;
+
+    // 双缓冲：当前块和预取块
+    __shared__ float tileA[2][32][32];
+    __shared__ float tileB[2][32][32];
+
+    float sum = 0.0f;
+    int tiles = width / 32;
+
+    // 预取第 0 块
+    tileA[0][ty][tx] = Ad[row * width + tx];
+    tileB[0][ty][tx] = Bd[ty * width + col];
+    __syncthreads();
+
+    for (int t = 0; t < tiles; t++) {
+        int cur = t % 2;       // 当前计算使用的缓冲区
+        int nxt = (t + 1) % 2; // 预取目标缓冲区
+
+        // 预取下一批数据（最后一次迭代跳过）
+        if (t + 1 < tiles) {
+            tileA[nxt][ty][tx] = Ad[row * width + (t + 1) * 32 + tx];
+            tileB[nxt][ty][tx] = Bd[((t + 1) * 32 + ty) * width + col];
+        }
+
+        // 当前块乘累加
+        for (int k = 0; k < 32; k++) {
+            sum += tileA[cur][ty][k] * tileB[cur][k][tx];
+        }
+        __syncthreads();
+    }
+    Cd[row * width + col] = sum;
+}
+```
+
 ### 5.3 性能分析
 
 **编译与运行：**
@@ -632,20 +718,22 @@ for (int stride = 16; stride > 0; stride = stride >> 1) {
 
 **循环展开后：**
 
+当线程数降至 32（一个 warp）时，同一线程束内的线程天然同步，无需 `__syncthreads()`，使用 `__syncwarp()` 即可保证 warp 内内存操作的可见性：
+
 ```c
 if (tx < 32) {
-    data[0][col] += data[0][col + 16];
-    __syncthreads();
-    data[0][col] += data[0][col + 8];
-    __syncthreads();
-    data[0][col] += data[0][col + 4];
-    __syncthreads();
-    data[0][col] += data[0][col + 2];
-    __syncthreads();
-    data[0][col] += data[0][col + 1];
-    __syncthreads();
+    volatile int *vdata = data[0];  // 使用 volatile 防止编译器优化掉中间结果
+    vdata[col] += vdata[col + 16];
+    __syncwarp();
+    vdata[col] += vdata[col + 8];
+    __syncwarp();
+    vdata[col] += vdata[col + 4];
+    __syncwarp();
+    vdata[col] += vdata[col + 2];
+    __syncwarp();
+    vdata[col] += vdata[col + 1];
+    __syncwarp();
 }
-__syncthreads();
 if (tx == 0)
     r[blockIdx.x] = data[0][0];
 ```
@@ -662,11 +750,30 @@ __global__ void reduce_unroll(int *a, int *r) {
     data[row][col] = a[tid];
     __syncthreads();
 
+    // 跨 warp 归约：线程块内 32 个 warp 逐步归约至 1 个 warp
     for (int stride = 16; stride > 0; stride = stride >> 1) {
         if (row < stride)
             data[row][col] += data[row + stride][col];
         __syncthreads();
     }
+
+    // 最后一个 warp 内循环展开，消除分支和 __syncthreads()
+    if (tx < 32) {
+        volatile int *vdata = data[0];
+        vdata[col] += vdata[col + 16];
+        __syncwarp();
+        vdata[col] += vdata[col + 8];
+        __syncwarp();
+        vdata[col] += vdata[col + 4];
+        __syncwarp();
+        vdata[col] += vdata[col + 2];
+        __syncwarp();
+        vdata[col] += vdata[col + 1];
+        __syncwarp();
+    }
+
+    if (tx == 0)
+        r[blockIdx.x] = data[0][0];
 }
 ```
 

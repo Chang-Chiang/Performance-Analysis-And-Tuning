@@ -1,9 +1,21 @@
-### 3. 了解一下自己的硬件
+# 硬件配置与调优
 
-> 通过修改一下系统配置获得性能提升, 非学习重点,
-> 但了解一下硬件可以更详细地进行性能评估
+> 通过修改系统配置获得性能提升，了解硬件可以更详细地进行性能评估
 
-##### 处理器
+- [硬件配置与调优](#硬件配置与调优)
+  - [处理器](#处理器)
+    - [查看处理器相关信息](#查看处理器相关信息)
+    - [参数调整](#参数调整)
+  - [内存](#内存)
+    - [查看内存相关信息](#查看内存相关信息)
+    - [参数调整](#参数调整-1)
+  - [文件系统](#文件系统)
+  - [磁盘](#磁盘)
+  - [网络](#网络)
+
+---
+
+## 处理器
 
 **查看处理器相关信息**
 
@@ -64,7 +76,9 @@ $ cat /proc/cpuinfo | grep "processor" | wc -l
   ```
 
 - 进程绑定处理器
-  增加进程的处理器缓存, 提高内存 I/O 性能
+
+  增加进程的处理器缓存，提高内存 I/O 性能
+
   ```shell
   # 绑定进程到 CPU 0
   $ taskset -c 0 ./benchmark
@@ -77,6 +91,7 @@ $ cat /proc/cpuinfo | grep "processor" | wc -l
   ```
 
 - 平衡中断
+
   设置中断在哪个处理器处理
 
   ```shell
@@ -106,7 +121,8 @@ $ cat /proc/cpuinfo | grep "processor" | wc -l
   ```
 
 - 多核优化
-  处理器 0 很重要, 具有调度功能
+
+  处理器 0 很重要，具有调度功能
 
   **CPU 0 的特殊性：**
 
@@ -246,7 +262,9 @@ $ cat /proc/cpuinfo | grep "processor" | wc -l
   $ perf stat -e node-loads,node-load-misses ./benchmark
   ```
 
-##### 内存
+---
+
+## 内存
 
 **查看内存相关信息**
 
@@ -346,6 +364,7 @@ $ sudo dmidecode -t memory | grep -i error
   # 使用大页运行程序
   $ hugepages --size 2M --nr 50 ./benchmark
   ```
+
 - swap 调整
 
   **什么是 swap：**
@@ -418,6 +437,7 @@ $ sudo dmidecode -t memory | grep -i error
   | 数据库服务器   | 设置较低的 swappiness（10-30） |
   | 内存密集型应用 | 减少或禁用 swap                |
   | 通用服务器     | 默认值 60 即可                 |
+
 - 内存同页合并
 
   **什么是 KSM（Kernel Samepage Merging）：**
@@ -599,7 +619,9 @@ $ sudo dmidecode -t memory | grep -i error
   | 容器环境 | cgroup       | 精细控制 |
   | 虚拟机   | cgroup + KSM | 内存优化 |
 
-##### 文件系统
+---
+
+## 文件系统
 
 文件系统是操作系统与磁盘设备之间的桥梁，负责数据存储、管理和完整性保证。
 
@@ -720,7 +742,9 @@ $ sudo stap -e 'probe vfs.read { printf("%s %d\n", execname(), pid()) }'
 | `blktrace`  | 块设备追踪   |
 | `SystemTap` | 动态追踪     |
 
-##### 磁盘
+---
+
+## 磁盘
 
 磁盘是速度较慢的存储子系统，通常会成为系统性能瓶颈。当高负载下磁盘成为瓶颈时，CPU 会空闲等待 I/O 完成。
 
@@ -850,7 +874,9 @@ $ sudo iotop -o
 5. 根据场景选择优化策略
 ```
 
-##### 网络
+---
+
+## 网络
 
 随着计算节点规模扩大，网络性能对整体系统影响越来越大。
 
