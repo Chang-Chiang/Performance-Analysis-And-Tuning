@@ -12,7 +12,7 @@ constexpr int maxRandom = 100;
 //     short s;
 //     double d;
 //     bool b;
-
+//
 //     bool operator<(const S &s) const { return this->i < s.i; }
 // };
 
@@ -25,12 +25,6 @@ struct S {
 
     bool operator<(const S &s) const { return this->i < s.i; }
 };
-
-// // check sizeof S during compiling
-// template <int N>
-// class TD;
-// // never compiles but shows the value of sizeof(s)
-// TD<sizeof(S)> td;
 
 void init(std::vector<S> &arr);
 S create_entry(int first_value, int second_value);
