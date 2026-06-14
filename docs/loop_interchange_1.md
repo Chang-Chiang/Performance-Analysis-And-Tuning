@@ -1,251 +1,213 @@
+# Loop Interchange
+
+> **环境准备**
+>
+> ```bash
+> # 将 CPU 调频策略设为 performance，锁定最高频率，避免动态调频干扰 benchmark 稳定性
+> sudo cpupower frequency-set --governor performance
+>
+> # 创建 build 目录并进入（out-of-source build，保持源码目录干净）
+> cmake -E make_directory build && cd build
+>
+> # 配置构建：Release 模式开启优化（-O2/-O3），同时加 -g 保留调试符号以便 perf 定位源码行
+> cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-g" -DCMAKE_CXX_FLAGS="-g" ..
+>
+> # 编译，8 线程并行加速构建
+> cmake --build . --config Release --parallel 8
+> ```
+
+## 优化前
+
+### 原始代码
+
+矩阵乘法 `C = A × B`，400×400 的 `float` 矩阵，循环顺序为 **i-j-k**：
+
 ```c++
-for (int i = 0; i < N; i++) {
-    for (int j = 0; j < N; j++) {
-        for (int k = 0; k < N; k++) {
-            result[i][j] += a[i][k] * b[k][j];
+void multiply(Matrix &result, const Matrix &a, const Matrix &b) {
+    zero(result);
+
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            for (int k = 0; k < N; k++) {
+                result[i][j] += a[i][k] * b[k][j];
+            }
         }
     }
 }
 ```
 
+**问题：** 内层循环沿 `k` 迭代时，`b[k][j]` 的访问模式是 **列优先**（stride = N = 400），每次访问都跳过一整行（1600 字节），无法利用缓存行预取，导致大量 cache miss。
 
+### 验证正确性
+
+```shell
+$ ./validate
+Validation Successful
+```
+
+### 运行 benchmark
+
+benchmark 计算 `A^2021`（快速幂，多次调用 `multiply`）：
 
 ```shell
 $ cmake --build . --target benchmarkLab
-[100%] Built target lab
-2026-05-19T19:30:05+08:00
-Running ./lab
-Run on (12 X 4100 MHz CPU s)
-CPU Caches:
-  L1 Data 32 KiB (x6)
-  L1 Instruction 32 KiB (x6)
-  L2 Unified 256 KiB (x6)
-  L3 Unified 9216 KiB (x1)
-Load Average: 1.25, 1.42, 1.85
-***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
 ---------------------------------------------------------------
 Benchmark                     Time             CPU   Iterations
 ---------------------------------------------------------------
-bench1/iterations:10 1177240010 ns   1175749439 ns           10
-[100%] Built target benchmarkLab
+bench1/iterations:10  398306166 ns    398250028 ns           10
 ```
+
+### Profile
+
+一级分析（Top-Down）：
 
 ```shell
 $ perf stat --topdown -a taskset -c 0 ./lab
-2026-05-19T19:34:07+08:00
-Running ./lab
-Run on (12 X 4100 MHz CPU s)
-CPU Caches:
-  L1 Data 32 KiB (x6)
-  L1 Instruction 32 KiB (x6)
-  L2 Unified 256 KiB (x6)
-  L3 Unified 9216 KiB (x1)
-Load Average: 2.25, 1.79, 1.89
-***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
 ---------------------------------------------------------------
 Benchmark                     Time             CPU   Iterations
 ---------------------------------------------------------------
-bench1/iterations:10 1337887910 ns   1290322736 ns           10
+bench1/iterations:10  401354462 ns    401265491 ns           10
 
  Performance counter stats for 'system wide':
 
- %  tma_bad_speculation %  tma_backend_bound      %  tma_retiring %  tma_frontend_bound 
-                    3.8                 40.0                    31.1                   25.1 
-
-      13.387162961 seconds time elapsed
+ %  tma_backend_bound %  tma_retiring %  tma_frontend_bound %  tma_bad_speculation
+                32.9           52.4                 3.3                    1.7
 ```
 
-```shell
-$ perf stat --topdown --per-core -a ./lab
-2026-05-19T19:34:58+08:00
-Running ./lab
-Run on (12 X 4100 MHz CPU s)
-CPU Caches:
-  L1 Data 32 KiB (x6)
-  L1 Instruction 32 KiB (x6)
-  L2 Unified 256 KiB (x6)
-  L3 Unified 9216 KiB (x1)
-Load Average: 1.84, 1.75, 1.87
-***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
----------------------------------------------------------------
-Benchmark                     Time             CPU   Iterations
----------------------------------------------------------------
-bench1/iterations:10 1187155625 ns   1187060212 ns           10
-
- Performance counter stats for 'system wide':
-
-                   %  tma_bad_speculation %  tma_backend_bound      %  tma_retiring %  tma_frontend_bound 
-S0-D0-C0              2                     6.4                 41.3                    11.8                   40.5 
-S0-D0-C1              2                     0.8                 51.1                    38.6                    9.5 
-S0-D0-C2              2                     5.1                 33.2                    30.6                   31.1 
-S0-D0-C3              2                     6.5                 31.6                    24.5                   37.3 
-S0-D0-C4              2                     8.6                 31.0                    17.1                   43.3 
-S0-D0-C5              2                     8.6                 29.3                    16.4                   45.8 
-
-      11.878848956 seconds time elapsed
-
-```
-
-
+二级分析（toplev.py L2）：
 
 ```shell
 $ toplev.py --core S0-C0 -l2 --no-desc taskset -c 0 ./lab
-Consider disabling nmi watchdog to minimize multiplexing
-(echo 0 | sudo tee /proc/sys/kernel/nmi_watchdog or
- echo kernel.nmi_watchdog=0 >> /etc/sysctl.conf ; sysctl -p as root)
-Downloading https://raw.githubusercontent.com/intel/perfmon/main/mapfile.csv to mapfile.csv
-Downloading https://raw.githubusercontent.com/intel/perfmon/main/SKL/events/skylake_core.json to GenuineIntel-6-9E-core.json
-Downloading https://raw.githubusercontent.com/intel/perfmon/main/README.md to README.md
-Downloading https://raw.githubusercontent.com/intel/perfmon/main/LICENSE to LICENSE
-Downloading https://raw.githubusercontent.com/intel/perfmon/main/SKL/events/skylake_uncore.json to GenuineIntel-6-9E-uncore.json
-Will measure complete system.
-2026-05-19T19:41:47+08:00
-Running ./lab
-Run on (12 X 4100 MHz CPU s)
-CPU Caches:
-  L1 Data 32 KiB (x6)
-  L1 Instruction 32 KiB (x6)
-  L2 Unified 256 KiB (x6)
-  L3 Unified 9216 KiB (x1)
-Load Average: 1.48, 1.66, 1.79
-***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
----------------------------------------------------------------
-Benchmark                     Time             CPU   Iterations
----------------------------------------------------------------
-bench1/iterations:10 1350692536 ns   1308104473 ns           10
-# 5.01-full-perf on Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz [cfl/skylake]
-C0    BE               Backend_Bound               % Slots                       51.0   [ 8.0%]
-C0    BE/Mem           Backend_Bound.Memory_Bound  % Slots                       21.5   [ 8.0%]
-C0    BE/Core          Backend_Bound.Core_Bound    % Slots                       29.5   [ 8.0%]<==
-C0-T0 MUX                                          %                              8.00 
-C0-T1 MUX                                          %                              8.00 
-Run toplev --describe Core_Bound^ to get more information on bottleneck
-Add --run-sample to find locations
-Add --nodes '!+Core_Bound*/3,+MUX' for breakdown.
+# 5.1-full on Intel(R) Core(TM) Ultra 7 270K Plus [arl]
+core BE               Backend_Bound             % Slots                       43.1
+core BE/Core          Backend_Bound.Core_Bound  % Slots                       41.2  <==
 ```
 
+**瓶颈分析：** Core Bound 高达 41.2%，说明 CPU 执行单元被阻塞。根因是 `b[k][j]` 列优先访问导致 L1/L2 cache miss 频繁，流水线因等待数据而停顿。
 
-
-
-
-to use advisor see the source code
-
-```shell
-cmake -E make_directory build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-cmake --build . --config Release --parallel 8
-cmake --build . --target validateLab
-cmake --build . --target benchmarkLab
-
-|
-
-cmake -E make_directory build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-g" -DCMAKE_CXX_FLAGS="-g" ..
-cmake --build . --config Release --parallel 8
-cmake --build . --target validateLab
-cmake --build . --target benchmarkLab
-```
-
-
+> **为什么是 Core Bound 而不是 Memory Bound？**
+>
+> 在 TMA 框架中，Backend Bound 分为两个子类：
+>
+> | 类别 | 含义 | 典型原因 |
+> |------|------|---------|
+> | **Core Bound** | 流水线因**核内资源/延迟**而停顿 | L1/L2 cache miss、数据依赖、长延迟指令、执行端口争用 |
+> | **Memory Bound** | 流水线因**核外内存子系统**而停顿 | L3 cache miss、DRAM 访问延迟 |
+>
+> 关别在于**延迟的量级**：L1 miss → L2 hit 约 12 个 cycle，属于核内停顿，归为 Core Bound；L3 miss → DRAM 约 100+ 个 cycle，属于核外停顿，归为 Memory Bound。本例中 `b[k][j]` 列优先访问导致的是 L1/L2 cache miss，停顿发生在核内缓存层级，因此被归类为 Core Bound。
+>
+> 可用更深层 TMA 分析验证：`toplev.py --core S0-C0 -l3 --no-desc taskset -c 0 ./lab`，若 L3 级别显示 `Core_Bound.L1_Bound` 或 `Core_Bound.L2_Bound` 较高，即确认瓶颈在核内缓存层面。
 
 ---
 
+## 优化后
 
+### 优化后代码
+
+交换 j 和 k 的循环顺序，变为 **i-k-j**：
 
 ```c++
-for (int i = 0; i < N; i++) {
-    for (int k = 0; k < N; k++) {
-        for (int j = 0; j < N; j++) {
-            result[i][j] += a[i][k] * b[k][j];
+void multiply(Matrix &result, const Matrix &a, const Matrix &b) {
+    zero(result);
+
+    for (int i = 0; i < N; i++) {
+        for (int k = 0; k < N; k++) {
+            for (int j = 0; j < N; j++) {
+                result[i][j] += a[i][k] * b[k][j];
+            }
         }
     }
 }
 ```
 
+**改进点：** 内层循环沿 `j` 迭代时，`result[i][j]` 和 `b[k][j]` 都是 **行优先** 连续访问（stride = 1），充分利用缓存行预取，cache miss 大幅减少。
+
+### 验证正确性
+
 ```shell
-$ cmake --build . --target benchmarkLab
-[100%] Built target lab
-2026-05-19T21:05:30+08:00
-Running ./lab
-Run on (12 X 4100 MHz CPU s)
-CPU Caches:
-  L1 Data 32 KiB (x6)
-  L1 Instruction 32 KiB (x6)
-  L2 Unified 256 KiB (x6)
-  L3 Unified 9216 KiB (x1)
-Load Average: 1.81, 1.75, 2.22
-***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
----------------------------------------------------------------
-Benchmark                     Time             CPU   Iterations
----------------------------------------------------------------
-bench1/iterations:10  139345511 ns    139269044 ns           10
-[100%] Built target benchmarkLab
+$ ./validate
+Validation Successful
 ```
 
-
+### 运行 benchmark
 
 ```shell
-$ perf stat --topdown --per-core -a ./lab
-2026-05-19T21:06:49+08:00
-Running ./lab
-Run on (12 X 4100 MHz CPU s)
-CPU Caches:
-  L1 Data 32 KiB (x6)
-  L1 Instruction 32 KiB (x6)
-  L2 Unified 256 KiB (x6)
-  L3 Unified 9216 KiB (x1)
-Load Average: 1.57, 1.70, 2.16
-***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
+$ cmake --build . --target benchmarkLab
 ---------------------------------------------------------------
 Benchmark                     Time             CPU   Iterations
 ---------------------------------------------------------------
-bench1/iterations:10  114180944 ns    114178225 ns           10
+bench1/iterations:10   57407502 ns     57405073 ns           10
+```
+
+### Profile
+
+一级分析（Top-Down）：
+
+```shell
+$ perf stat --topdown -a taskset -c 0 ./lab
+---------------------------------------------------------------
+Benchmark                     Time             CPU   Iterations
+---------------------------------------------------------------
+bench1/iterations:10   59460681 ns     59441782 ns           10
 
  Performance counter stats for 'system wide':
 
-                   %  tma_bad_speculation %  tma_backend_bound      %  tma_retiring %  tma_frontend_bound 
-S0-D0-C0              2                     7.1                 37.0                    12.5                   43.3 
-S0-D0-C1              2                     0.2                 43.6                    54.7                    1.4 
-S0-D0-C2              2                     7.7                 24.0                    21.9                   46.3 
-S0-D0-C3              2                     7.8                 25.9                    14.5                   51.7 
-S0-D0-C4              2                     5.0                 36.5                    32.3                   26.3 
-S0-D0-C5              2                     6.5                 23.9                    32.7                   36.9 
-
-       1.149557780 seconds time elapsed
+ %  tma_backend_bound %  tma_retiring %  tma_frontend_bound %  tma_bad_speculation
+                33.4           33.8                 1.8                    0.6
 ```
 
-
+二级分析（toplev.py L2）：
 
 ```shell
 $ toplev.py --core S0-C0 -l2 --no-desc taskset -c 0 ./lab
-Consider disabling nmi watchdog to minimize multiplexing
-(echo 0 | sudo tee /proc/sys/kernel/nmi_watchdog or
- echo kernel.nmi_watchdog=0 >> /etc/sysctl.conf ; sysctl -p as root)
-Will measure complete system.
-2026-05-19T21:08:07+08:00
-Running ./lab
-Run on (12 X 4100 MHz CPU s)
-CPU Caches:
-  L1 Data 32 KiB (x6)
-  L1 Instruction 32 KiB (x6)
-  L2 Unified 256 KiB (x6)
-  L3 Unified 9216 KiB (x1)
-Load Average: 1.66, 1.68, 2.12
-***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
----------------------------------------------------------------
-Benchmark                     Time             CPU   Iterations
----------------------------------------------------------------
-bench1/iterations:10  128479473 ns    127607183 ns           10
-# 5.01-full-perf on Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz [cfl/skylake]
-C0    BE               Backend_Bound               % Slots                       48.0   [ 8.0%]
-C0    BE/Mem           Backend_Bound.Memory_Bound  % Slots                       20.0   [ 8.0%]
-C0    BE/Core          Backend_Bound.Core_Bound    % Slots                       28.0   [ 8.0%]<==
-C0-T0 MUX                                          %                              8.00 
-C0-T1 MUX                                          %                              8.00 
-Run toplev --describe Core_Bound^ to get more information on bottleneck
-Add --run-sample to find locations
-Add --nodes '!+Core_Bound*/3,+MUX' for breakdown.
+# 5.1-full on Intel(R) Core(TM) Ultra 7 270K Plus [arl]
+core BE               Backend_Bound               % Slots                       64.5
+core BE/Mem           Backend_Bound.Memory_Bound   % Slots                       22.3
+core BE/Core          Backend_Bound.Core_Bound     % Slots                       42.2  <==
 ```
 
+---
+
+## 优化分析
+
+### 性能对比
+
+| 指标            | 优化前 (i-j-k) | 优化后 (i-k-j) | 提升          |
+| --------------- | -------------- | -------------- | ------------- |
+| benchmark 耗时  | 398 ms         | 57.4 ms        | **6.9x 加速** |
+| Backend Bound   | 43.1%          | 64.5%          | —             |
+| Core Bound      | 41.2%          | 42.2%          | 持平          |
+| Memory Bound    | —              | 22.3%          | —             |
+| Frontend Bound  | 3.3%           | 1.8%           | -1.5%         |
+| Bad Speculation | 1.7%           | 0.6%           | -1.1%         |
+
+> **为什么 Backend Bound 反而升高了？** 优化前程序大部分时间在等待内存（cache miss），但这些等待被计入了 Retiring（52.4%）而非 Backend Bound，因为 CPU 流水线并未真正"繁忙"。优化后 cache 命中率提升，CPU 能更高效地发射指令，Backend Bound 的绝对值虽然百分比升高，但总耗时从 398ms 降至 57ms，实际后端等待时间大幅缩短。
+
+### 为什么有效
+
+1. **缓存行利用率**：`float` 矩阵每行 400×4B = 1600B = 25 个缓存行。i-j-k 顺序下内层循环每次访问 `b[k][j]` 跨越整行，stride = 1600B；i-k-j 顺序下 `b[k][j]` 连续访问，stride = 4B。
+
+2. **硬件预取**：连续内存访问模式让 CPU 硬件预取器能准确预测下一次访问地址，提前将数据拉入 L1 缓存。
+
+3. **SIMD 友好**：连续访问使编译器能自动向量化内层循环（`j` 循环），用 AVX/AVX2 一次处理 8 个 `float`。
+
+4. **矩阵幂的放大效应**：`power(a, 2021)` 需要多次调用 `multiply`，单次乘法的优化被指数级放大。
+
+### 访问模式图示
+
+```
+矩阵 B (400×400) 的内存布局（行优先）：
+
+  ┌─────────────────────────────────────────┐
+  │ row 0: [0][0] [0][1] [0][2] ... [0][399]│  ← 连续 1600B
+  │ row 1: [1][0] [1][1] [1][2] ... [1][399]│
+  │ ...                                     │
+  │ row 399: ...                            │
+  └─────────────────────────────────────────┘
+
+i-j-k (原始): 内层 k 循环访问 b[k][j]
+  → b[0][j], b[1][j], b[2][j], ...  stride = 1600B ✗ 跳行
+
+i-k-j (优化): 内层 j 循环访问 b[k][j]
+  → b[k][0], b[k][1], b[k][2], ...  stride = 4B    ✓ 连续
+```
