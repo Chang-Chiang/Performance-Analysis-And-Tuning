@@ -1,15 +1,16 @@
 
-#include "solution.h"
 #include <cstring>
 #include <iostream>
 
-int main(int argc, char **argv) {
+#include "solution.h"
+
+int main(int argc, char** argv) {
     constexpr int mandatoryArgumentsCount = 2;
     if (argc != 1 + mandatoryArgumentsCount) {
         std::cerr << "Usage: input.pgm output-golden.pgm" << std::endl;
         return 1;
     }
-    const std::string input = argv[1];
+    const std::string input        = argv[1];
     const std::string outputGolden = argv[2];
 
     Grayscale image;
@@ -30,8 +31,8 @@ int main(int argc, char **argv) {
             }
 
             if ((image.width != image2.width) || (image.height != image2.height)) {
-                std::cerr << "Validation Failed. Wrong image dimensions " 
-                          << image.width << 'x' << image.height << std::endl;
+                std::cerr << "Validation Failed. Wrong image dimensions " << image.width << 'x'
+                          << image.height << std::endl;
                 return 1;
             }
 
@@ -49,8 +50,9 @@ int main(int argc, char **argv) {
                     std::cerr << "Result[" << i << "] = " << static_cast<int>(p1[i])
                               << ". Expected[" << i << "] = " << static_cast<int>(p2[i])
                               << std::endl;
-                    if (--downcount <= 0)
+                    if (--downcount <= 0) {
                         break;
+                    }
                 }
             }
             return 1;
