@@ -716,7 +716,45 @@ flowchart TD
 
 ## 四. 性能分析优化实例
 
-- 
+基于 [perf-ninja](https://github.com/dendibakh/perf-ninja) 的 TMA 实战练习，每个实验包含：源码分析 → benchmark 基准测试 → perf/TMA 瓶颈定位 → 优化实现 → 效果验证。
+
+> 详细文档见 [`docs/`](docs/) 目录，源码见 [`TMA/`](TMA/) 目录。
+
+### Memory Bound 内存瓶颈
+
+| 实验 | 优化技术 | 加速比 | 文档 |
+|------|---------|--------|------|
+| [data_packing](TMA/memory_bound/data_packing/) | 结构体压缩（位域 + float） | 7.5x | [docs/data_packing.md](docs/data_packing.md) |
+| [loop_interchange_1](TMA/memory_bound/loop_interchange_1/) | 循环交换（矩阵乘法 i-j-k → i-k-j） | 6.9x | [docs/loop_interchange_1.md](docs/loop_interchange_1.md) |
+| [loop_interchange_2](TMA/memory_bound/loop_interchange_2/) | 循环交换（高斯模糊列优先 → 行优先） | 9.7x | [docs/loop_interchange_2.md](docs/loop_interchange_2.md) |
+| [loop_tiling_1](TMA/memory_bound/loop_tiling_1/) | 循环分块（矩阵转置缓存友好） | 1.75x | [docs/loop_tiling_1.md](docs/loop_tiling_1.md) |
+| [swmem_prefetch_1](TMA/memory_bound/swmem_prefetch_1/) | 软件预取（哈希表随机查找） | 3.1x | [docs/swmem_prefetch_1.md](docs/swmem_prefetch_1.md) |
+| [false_sharing_1](TMA/memory_bound/false_sharing_1/) | 消除伪共享（alignas(64)） | 15.8x | [docs/false_sharing.md](docs/false_sharing.md) |
+
+### Core Bound 计算瓶颈
+
+| 实验 | 优化技术 | 加速比 | 文档 |
+|------|---------|--------|------|
+| [vectorization_1](TMA/core_bound/vectorization_1/) | 数据级并行（AoS → SoA + 自动向量化） | 2.1x | [docs/vectorization_1.md](docs/vectorization_1.md) |
+| [vectorization_2](TMA/core_bound/vectorization_2/) | 消除依赖链（uint16 → uint32 累加器） | 20.9x | [docs/vectorization_2.md](docs/vectorization_2.md) |
+| [compiler_intrinsics_1](TMA/core_bound/compiler_intrinsics_1/) | SSE4.1 intrinsics（滑动窗口前缀和） | 1.14x | [docs/compiler_intrinsics_1.md](docs/compiler_intrinsics_1.md) |
+| [compiler_intrinsics_2](TMA/core_bound/compiler_intrinsics_2/) | AVX2 intrinsics（批量查找换行符） | 15.1x | [docs/compiler_intrinsics_2.md](docs/compiler_intrinsics_2.md) |
+| [dep_chains_1](TMA/core_bound/dep_chains_1/) | 并行依赖链（M 路链表查找） | 3.6x | [docs/dependency_chains_1.md](docs/dependency_chains_1.md) |
+| [function_inlining_1](TMA/core_bound/function_inlining_1/) | 函数内联（qsort → std::sort + lambda） | 1.63x | [docs/function_inlining_1.md](docs/function_inlining_1.md) |
+
+### Bad Speculation 分支预测
+
+| 实验 | 优化技术 | 加速比 | 文档 |
+|------|---------|--------|------|
+| [lookup_tables_1](TMA/bad_speculation/lookup_tables_1/) | 查找表替代分支链 | 1.87x | [docs/lookup_tables.md](docs/lookup_tables.md) |
+
+### Misc 编译器优化
+
+| 实验 | 优化技术 | 加速比 | 文档 |
+|------|---------|--------|------|
+| [lto](TMA/misc/lto/) | 链接时优化（跨翻译单元内联） | 1.50x | [docs/lto.md](docs/lto.md) |
+| [pgo](TMA/misc/pgo/) | Profile-Guided Optimization | ~1x | [docs/pgo.md](docs/pgo.md) |
+| [warmup](TMA/misc/warmup/) | 算法优化（O(N) → O(1)） | 70x | [docs/warmup.md](docs/warmup.md) | 
 
 ## 参考
 
