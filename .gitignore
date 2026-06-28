@@ -47,5 +47,5 @@ loop_unrolling_*
 # debug information files
 *.dwo
 
-/tools/benchmark/
-build
+/TMA/tools/benchmark/
+build*

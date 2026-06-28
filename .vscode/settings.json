@@ -4,5 +4,7 @@
     },
     "[jsonc]": {
         "editor.formatOnSave": false
-    }
+    },
+    "breadcrumbs.enabled": false,
+    "outline.showMarkdownHeaders": false
 }
