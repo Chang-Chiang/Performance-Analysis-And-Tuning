@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMA 性能优化实验知识库 · 优化前后代码对比</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --panel: #161a23;
+            --panel-2: #1c2230;
+            --border: #262d3d;
+            --text: #e6e9ef;
+            --muted: #93a0b4;
+            --accent: #5aa9ff;
+            --accent-2: #7c5cff;
+            --before: #ff6b6b;
+            --before-bg: #2a1a1d;
+            --before-border: #4d2b30;
+            --after: #4ec98b;
+            --after-bg: #16281f;
+            --after-border: #274d38;
+            --code-bg: #11141c;
+            --kw: #c678dd;
+            --str: #98c379;
+            --num: #d19a66;
+            --com: #5c6773;
+            --pre: #e06c75;
+            --typ: #61afef;
+            --fn: #e5c07b;
+            --mem: #e0803a;
+            --core: #5aa9ff;
+            --spec: #c678dd;
+            --misc: #4ec98b;
+            --radius: 12px;
+            --mono: "JetBrains Mono", "Fira Code", Consolas, "Cascadia Code", Menlo, monospace;
+        }
+
+        [data-theme="light"] {
+            --bg: #f5f7fb;
+            --panel: #ffffff;
+            --panel-2: #f0f3f9;
+            --border: #dde3ee;
+            --text: #1b2230;
+            --muted: #5b6880;
+            --accent: #2f7fe0;
+            --accent-2: #6b45e0;
+            --before: #d63b3b;
+            --before-bg: #fdecec;
+            --before-border: #f3c9c9;
+            --after: #1f9d61;
+            --after-bg: #e9f8ef;
+            --after-border: #bfe6cf;
+            --code-bg: #0f131b;
+            --com: #6b7686;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html {
+            scroll-behavior: smooth
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.65;
+            font-size: 15px;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none
+        }
+
+        code {
+            font-family: var(--mono)
+        }
+
+        .layout {
+            display: flex;
+            align-items: flex-start;
+            max-width: 1560px;
+            margin: 0 auto
+        }
+
+        .sidebar {
+            position: sticky;
+            top: 0;
+            align-self: flex-start;
+            height: 100vh;
+            overflow-y: auto;
+            width: 280px;
+            flex: 0 0 280px;
+            padding: 24px 16px;
+            border-right: 1px solid var(--border);
+            background: var(--panel);
+        }
+
+        .content {
+            flex: 1 1 auto;
+            min-width: 0;
+            padding: 28px 34px 90px
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px
+        }
+
+        .brand .logo {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            flex: 0 0 34px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: #fff;
+            font-size: 15px;
+        }
+
+        .brand h1 {
+            font-size: 16px;
+            margin: 0;
+            letter-spacing: .3px
+        }
+
+        .brand p {
+            margin: 2px 0 0;
+            font-size: 11.5px;
+            color: var(--muted)
+        }
+
+        .nav {
+            margin-top: 20px
+        }
+
+        .nav-group {
+            margin-bottom: 6px
+        }
+
+        .nav-cat {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            color: var(--muted);
+            padding: 10px 10px 5px;
+            font-weight: 700;
+        }
+
+        .nav a.item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 13px;
+            opacity: .86;
+            border-left: 2px solid transparent;
+            transition: .15s;
+        }
+
+        .nav a.item .sp {
+            margin-left: auto;
+            font-size: 10.5px;
+            color: var(--after);
+            font-weight: 700;
+            font-family: var(--mono)
+        }
+
+        .nav a.item:hover {
+            background: var(--panel-2);
+            opacity: 1
+        }
+
+        .nav a.item.active {
+            background: var(--panel-2);
+            border-left-color: var(--accent);
+            opacity: 1;
+            color: var(--accent)
+        }
+
+        .side-tools {
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        .btn {
+            background: var(--panel-2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12.5px;
+            transition: .15s;
+        }
+
+        .btn:hover {
+            border-color: var(--accent);
+            color: var(--accent)
+        }
+
+        .hero {
+            background: linear-gradient(135deg, rgba(90, 169, 255, .12), rgba(124, 92, 255, .10));
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 26px 28px;
+            margin-bottom: 22px;
+        }
+
+        .hero h2 {
+            margin: 0 0 8px;
+            font-size: 26px;
+            letter-spacing: .5px
+        }
+
+        .hero p {
+            margin: 0;
+            color: var(--muted);
+            max-width: 920px
+        }
+
+        .tma {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 18px
+        }
+
+        .tma .pill {
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--panel)
+        }
+
+        .tma .pill b {
+            font-family: var(--mono)
+        }
+
+        .stats {
+            display: flex;
+            gap: 26px;
+            margin-top: 20px;
+            flex-wrap: wrap
+        }
+
+        .stat b {
+            display: block;
+            font-size: 24px;
+            color: var(--accent);
+            line-height: 1.2
+        }
+
+        .stat span {
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        .searchbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: var(--bg);
+            padding: 12px 0;
+            margin-bottom: 8px
+        }
+
+        .searchbar input {
+            width: 100%;
+            padding: 11px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--panel);
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+        }
+
+        .searchbar input:focus {
+            border-color: var(--accent)
+        }
+
+        .section {
+            margin-top: 38px;
+            scroll-margin-top: 70px
+        }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 6px
+        }
+
+        .section-head .idx {
+            font-size: 12px;
+            font-weight: 800;
+            color: #fff;
+            padding: 3px 10px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        }
+
+        .section-head h3 {
+            margin: 0;
+            font-size: 21px
+        }
+
+        .section-desc {
+            color: var(--muted);
+            margin: 0 0 18px;
+            font-size: 13.5px
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 22px;
+            margin-bottom: 20px;
+            scroll-margin-top: 70px;
+        }
+
+        .card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+            flex-wrap: wrap
+        }
+
+        .card h4 {
+            margin: 0;
+            font-size: 17.5px
+        }
+
+        .card h4 .en {
+            color: var(--muted);
+            font-weight: 500;
+            font-size: 13px;
+            margin-left: 8px
+        }
+
+        .tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center
+        }
+
+        .tag {
+            font-size: 11px;
+            padding: 3px 9px;
+            border-radius: 20px;
+            background: var(--panel-2);
+            color: var(--muted);
+            border: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .badge {
+            font-size: 12px;
+            font-weight: 800;
+            padding: 3px 11px;
+            border-radius: 20px;
+            font-family: var(--mono);
+            background: var(--after-bg);
+            color: var(--after);
+            border: 1px solid var(--after-border);
+            white-space: nowrap;
+        }
+
+        .principle {
+            margin: 12px 0 4px;
+            color: var(--text);
+            font-size: 14px
+        }
+
+        .principle b {
+            color: var(--accent)
+        }
+
+        .src {
+            font-size: 11.5px;
+            color: var(--muted);
+            margin: 2px 0 14px;
+            font-family: var(--mono)
+        }
+
+        .src code {
+            color: var(--fn)
+        }
+
+        .compare {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px
+        }
+
+        .col {
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            min-width: 0
+        }
+
+        .col.before {
+            border-color: var(--before-border)
+        }
+
+        .col.after {
+            border-color: var(--after-border)
+        }
+
+        .col-head {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 13px;
+            font-size: 12.5px;
+            font-weight: 700;
+            letter-spacing: .4px;
+        }
+
+        .col.before .col-head {
+            background: var(--before-bg);
+            color: var(--before)
+        }
+
+        .col.after .col-head {
+            background: var(--after-bg);
+            color: var(--after)
+        }
+
+        .col-head .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor
+        }
+
+        .col-head .lbl {
+            margin-left: auto;
+            font-weight: 500;
+            font-size: 11px;
+            opacity: .8
+        }
+
+        pre {
+            margin: 0;
+            padding: 14px 15px;
+            background: var(--code-bg);
+            overflow-x: auto;
+            font-family: var(--mono);
+            font-size: 12.6px;
+            line-height: 1.6;
+            flex: 1;
+        }
+
+        pre code {
+            color: #d7dce5;
+            white-space: pre;
+            display: block
+        }
+
+        .kw {
+            color: var(--kw)
+        }
+
+        .str {
+            color: var(--str)
+        }
+
+        .num {
+            color: var(--num)
+        }
+
+        .com {
+            color: var(--com);
+            font-style: italic
+        }
+
+        .pre {
+            color: var(--pre)
+        }
+
+        .typ {
+            color: var(--typ)
+        }
+
+        .fn {
+            color: var(--fn)
+        }
+
+        .note {
+            margin-top: 14px;
+            padding: 12px 15px;
+            border-radius: 9px;
+            background: var(--panel-2);
+            border-left: 3px solid var(--accent);
+            font-size: 13.3px;
+            color: var(--text);
+        }
+
+        .note b {
+            color: var(--accent)
+        }
+
+        .note .k {
+            color: var(--after);
+            font-weight: 700
+        }
+
+        .note code {
+            background: var(--code-bg);
+            color: var(--fn);
+            padding: 1px 5px;
+            border-radius: 5px;
+            font-size: 12px
+        }
+
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 12.5px
+        }
+
+        .footer code {
+            color: var(--fn)
+        }
+
+        .hidden {
+            display: none !important
+        }
+
+        @media(max-width:1080px) {
+            .sidebar {
+                display: none
+            }
+
+            .content {
+                padding: 20px 16px 70px
+            }
+
+            .compare {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo">TMA</div>
+                <div>
+                    <h1>TMA 优化实验库</h1>
+                    <p>Top-down 瓶颈分类 · 前后对比</p>
+                </div>
+            </div>
+            <nav class="nav" id="nav"></nav>
+            <div class="side-tools">
+                <button class="btn" id="themeBtn">🌙 深色</button>
+                <button class="btn" id="topBtn">↑ 顶部</button>
+            </div>
+        </aside>
+
+        <main class="content">
+            <div class="hero">
+                <h2>TMA 性能优化实验知识库</h2>
+                <p>本文档基于 <code>TMA/</code> 目录（源自 <a href="https://github.com/dendibakh/perf-ninja">perf-ninja</a>
+                    实战练习）整理。实验按 <b>Top-down Microarchitecture Analysis</b> 的瓶颈层级分类，每个实验以「优化前 baseline / 优化后
+                    solution」分栏对比展示代码形态、优化手法与实测加速比。</p>
+                <div class="tma">
+                    <span class="pill">🧠 Memory Bound · <b>访存瓶颈</b></span>
+                    <span class="pill">⚙️ Core Bound · <b>计算瓶颈</b></span>
+                    <span class="pill">🎲 Bad Speculation · <b>分支预测</b></span>
+                    <span class="pill">🛠️ Misc · <b>编译器优化</b></span>
+                </div>
+                <div class="stats" id="stats"></div>
+            </div>
+
+            <div class="searchbar">
+                <input type="text" id="search" placeholder="🔍 搜索实验、优化技术或代码片段…（如：prefetch / SoA / LTO / 伪共享）">
+            </div>
+
+            <div id="sections"></div>
+
+            <div class="footer">
+                <p>来源目录：<code>TMA/</code>（memory_bound · core_bound · bad_speculation · misc）。每个实验包含
+                    <code>solution.cpp</code>（优化后）、<code>validate.cpp</code>（含 baseline
+                    参照实现）、<code>bench.cpp</code>（Google Benchmark）。</p>
+                <p>加速比为 README 记录的参考值，实际取决于硬件与输入。分析命令：<code>perf stat --topdown</code> /
+                    <code>toplev.py</code>；构建：<code>cmake -DCMAKE_BUILD_TYPE=Release ..</code>。</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        /* ============ 轻量 C/C++ 语法高亮 ============ */
+        const KEYWORDS = /\b(auto|break|case|char|class|const|constexpr|continue|default|delete|do|double|else|enum|extern|float|for|goto|if|inline|int|long|namespace|new|operator|private|public|register|return|short|signed|sizeof|static|struct|switch|template|this|typedef|typename|unsigned|using|void|volatile|while|bool|true|false|NULL|nullptr)\b/g;
+        function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+        function highlight(code) {
+            let s = esc(code);
+            const store = [];
+            const keep = (html) => { store.push(html); return "\u0000" + String.fromCharCode(0xE000 + store.length - 1) + "\u0000"; };
+            s = s.replace(/(\/\*[\s\S]*?\*\/|\/\/[^\n]*)/g, m => keep('<span class="com">' + m + '</span>'));
+            s = s.replace(/(&quot;(?:[^&]|&(?!quot;))*?&quot;|'(?:[^'\\]|\\.)*')/g, m => keep('<span class="str">' + m + '</span>'));
+            s = s.replace(/("(?:[^"\\]|\\.)*")/g, m => keep('<span class="str">' + m + '</span>'));
+            s = s.replace(/^(\s*#\s*[a-zA-Z_]+[^\n]*)/gm, m => keep('<span class="pre">' + m + '</span>'));
+            s = s.replace(KEYWORDS, m => '<span class="kw">' + m + '</span>');
+            s = s.replace(/\b(__m128d?|__m128i|__m256d?|__m256i|_mm\d?_[a-z0-9_]+|_mm256_[a-z0-9_]+|uint8_t|uint16_t|uint32_t|size_t|std)\b/g, m => '<span class="typ">' + m + '</span>');
+            s = s.replace(/\b(0x[0-9a-fA-F]+|\d+\.?\d*(?:[eE][-+]?\d+)?[fFuUlL]*)\b/g, m => '<span class="num">' + m + '</span>');
+            s = s.replace(/\b([A-Za-z_]\w*)(?=\s*\()/g, (m) => {
+                if (m.indexOf('span') >= 0) return m;
+                return '<span class="fn">' + m + '</span>';
+            });
+            s = s.replace(/\u0000([\uE000-\uF8FF])\u0000/g, (m, c) => store[c.charCodeAt(0) - 0xE000]);
+            return s;
+        }
+
+        /* ============ 数据 ============ */
+        const DATA = [
+            {
+                cat: "Memory Bound · 访存瓶颈", icon: "🧠",
+                desc: "TMA 中 Memory Bound 表示流水线因等待数据（L1/L2/L3/DRAM 延迟或带宽）而停顿。典型手段：减小数据结构、改善访存连续性、分块、预取、消除伪共享。",
+                items: [
+                    {
+                        name: "结构体压缩", en: "Data Packing", speedup: "7.5x",
+                        tags: ["Memory Bound", "位域", "计数排序"],
+                        src: "TMA/memory_bound/data_packing/",
+                        principle: "原结构体因对齐填充占 32 字节，排序时搬运大量无效数据。用<b>位域压缩到 8 字节</b>，并将 O(N log N) 的 <code>std::sort</code> 换为 O(N) 计数排序。",
+                        beforeLabel: "32B 结构体 + std::sort",
+                        afterLabel: "8B 位域 + 计数排序",
+                        before: `// 对齐填充导致 sizeof(S) = 32 字节
+struct S {
+    int       i;
+    long long l;
+    short     s;
+    double    d;
+    bool      b;
+    bool operator<(const S& o) const { return i < o.i; }
+};
+
+void solution(std::vector<S>& arr) {
+    std::shuffle(arr.begin(), arr.end(), g);
+    std::sort(arr.begin(), arr.end());  // O(N log N)
+}`,
+                        after: `// 位域压缩：sizeof(S) = 8 字节
+struct S {
+    float          d;
+    long long      l : 16;
+    int            i : 8;
+    unsigned short s : 7;
+    bool           b : 1;
+};
+
+void solution(std::vector<S>& arr) {
+    std::shuffle(arr.begin(), arr.end(), g);
+    std::array<int, maxRandom-minRandom+2> cnt{};
+    for (const auto& v : arr) ++cnt[v.i - minRandom + 1];
+    for (int i = 1; i < cntSize; ++i) cnt[i] += cnt[i-1];
+    std::vector<S> sorted(N);
+    for (const auto& v : arr) sorted[cnt[v.i - minRandom]++] = v;
+    arr = sorted;   // 计数排序 O(N)
+}`,
+                        note: "<b>要点：</b>值域已知（[0,100]），适合计数排序。<span class='k'>数据体积缩小 4 倍 + 复杂度降阶</span>，双重收益。"
+                    },
+                    {
+                        name: "矩阵乘法循环交换", en: "Loop Interchange 1", speedup: "6.9x",
+                        tags: ["Memory Bound", "连续访存"],
+                        src: "TMA/memory_bound/loop_interchange_1/",
+                        principle: "矩阵幂运算的核心是矩乘。原 <code>i-j-k</code> 顺序下 <code>b[k][j]</code> 与 <code>result[i][j]</code> 按列跳跃访问；交换为 <code>i-k-j</code> 后两者均按行连续。",
+                        beforeLabel: "i-j-k",
+                        afterLabel: "i-k-j",
+                        before: `// result[i][j] 在内层固定，b[k][j] 跨行访问
+for (int i = 0; i < N; i++) {
+    for (int j = 0; j < N; j++) {
+        for (int k = 0; k < N; k++) {
+            result[i][j] += a[i][k] * b[k][j];
+        }
+    }
+}`,
+                        after: `// 交换 j/k：result[i][j] 与 b[k][j] 均按行连续
+for (int i = 0; i < N; i++) {
+    for (int k = 0; k < N; k++) {
+        for (int j = 0; j < N; j++) {
+            result[i][j] += a[i][k] * b[k][j];
+        }
+    }
+}`,
+                        note: "<b>要点：</b><code>a[i][k]</code> 在内层成为循环不变量，可被提到寄存器；连续写入利于缓存与向量化。"
+                    },
+                    {
+                        name: "高斯模糊循环交换", en: "Loop Interchange 2", speedup: "9.7x",
+                        tags: ["Memory Bound", "步幅访问", "图像"],
+                        src: "TMA/memory_bound/loop_interchange_2/",
+                        principle: "竖直模糊的累加循环中，固定列 <code>c</code>、递增核索引 <code>i</code>，访问步幅为 <code>width</code>（跨行）。交换后以 <code>c</code> 为内层，访问连续。",
+                        beforeLabel: "c-外层，步幅访问",
+                        afterLabel: "c-内层，连续访问",
+                        before: `for (int r = radius; r < height - radius; r++) {
+    for (int c = 0; c < width; c++) {
+        int dot = 0;
+        for (int i = 0; i < 2*radius+1; i++) {
+            // 固定 c、递增 i → 步幅 = width
+            dot += input[(r-radius+i)*width + c] * kernel[i];
+        }
+        output[r*width + c] = dot >> shift;
+    }
+}`,
+                        after: `for (int r = radius; r < height - radius; r++) {
+    int dot[width];
+    for (int c = 0; c < width; c++) dot[c] = 0;
+    for (int i = 0; i < 2*radius+1; i++)
+        for (int c = 0; c < width; c++)
+            dot[c] += input[(r-radius+i)*width + c] * kernel[i]; // 连续
+    for (int c = 0; c < width; c++)
+        output[r*width + c] = (dot[c] + rounding) >> shift;
+}`,
+                        note: "<b>要点：</b>内层按行连续扫描，缓存命中率大幅提升；配合移位代替除法（<code>&gt;&gt; shift</code>）。"
+                    },
+                    {
+                        name: "软件预取", en: "SW Memory Prefetch", speedup: "3.1x",
+                        tags: ["Memory Bound", "哈希表", "指针追逐"],
+                        src: "TMA/memory_bound/swmem_prefetch_1/",
+                        principle: "哈希表查找是随机访问，缓存未命中严重。提前对<b>未来 16 个查找键</b>发起预取，使内存延迟与当前计算重叠。",
+                        beforeLabel: "无预取",
+                        afterLabel: "look-ahead 16",
+                        before: `int solution(const hash_map_t* hash_map,
+             const std::vector<int>& lookups) {
+    int result = 0;
+    for (int val : lookups) {
+        if (hash_map->find(val)) {   // 随机访问，频繁 miss
+            result += getSumOfDigits(val);
+        }
+    }
+    return result;
+}`,
+                        after: `int solution(const hash_map_t* hash_map,
+             const std::vector<int>& lookups) {
+    int result = 0;
+    constexpr int look_ahead = 16;
+    for (size_t i = 0; i < lookups.size() - look_ahead; i++) {
+        int val = lookups[i];
+        if (hash_map->find(val))
+            result += getSumOfDigits(val);
+        hash_map->prefetchForVal(lookups[i + look_ahead]); // 提前预取
+    }
+    /* 尾部剩余元素顺序处理 */
+    return result;
+}`,
+                        note: "<b>要点：</b>预取距离（look_ahead）需足够覆盖内存延迟；<span class='k'>适用于指针追逐 / 哈希等随机访存场景</span>。"
+                    },
+                    {
+                        name: "循环分块", en: "Loop Tiling", speedup: "1.75x",
+                        tags: ["Memory Bound", "矩阵转置", "缓存分块"],
+                        src: "TMA/memory_bound/loop_tiling_1/",
+                        principle: "矩阵转置 <code>out[i][j]=in[j][i]</code> 中，读与写必有一个是跨行。按 <b>16×16 分块</b>后，读写都在小块内，同时获得良好的时间/空间局部性。",
+                        before: `bool solution(MatrixOfDoubles& in, MatrixOfDoubles& out) {
+    auto size = in.size();
+    for (int i = 0; i < size; i++)
+        for (int j = 0; j < size; j++)
+            out[i][j] = in[j][i];   // 一侧跨行，缓存不友好
+    return out[0][size - 1];
+}`,
+                        after: `bool solution(MatrixOfDoubles& in, MatrixOfDoubles& out) {
+    static constexpr int TILE_SIZE = 16;
+    int size = in.size();
+    for (int ii = 0; ii < size; ii += TILE_SIZE)
+      for (int jj = 0; jj < size; jj += TILE_SIZE)
+        for (int i = ii; i < std::min(ii+TILE_SIZE, size); i++)
+          for (int j = jj; j < std::min(jj+TILE_SIZE, size); j++)
+            out[i][j] = in[j][i];   // 块内读写均局部
+    return out[0][size - 1];
+}`,
+                        note: "<b>要点：</b>分块大小需使一个 tile 能放入 L1/L2；大矩阵（N=2001）下收益明显。"
+                    },
+                    {
+                        name: "消除伪共享", en: "False Sharing", speedup: "15.8x",
+                        tags: ["Memory Bound", "多线程", "OpenMP", "缓存行"],
+                        src: "TMA/memory_bound/false_sharing_1/",
+                        principle: "多线程向共享数组相邻元素 <code>sum[tid]</code> 累加，它们位于同一 64B 缓存行，引发缓存行在核间反复失效。用 <code>alignas(64)</code> 使每线程独占缓存行。",
+                        beforeLabel: "共享数组（伪共享）",
+                        afterLabel: "64B 对齐填充",
+                        before: `std::vector<uint32_t> sum(thread_count, 0);
+#pragma omp parallel num_threads(thread_count)
+{
+    int idx = omp_get_thread_num();
+#pragma omp for
+    for (int i = 0; i < data.size(); i++) {
+        auto item = data[i];
+        item += 1000; item ^= 0xADEDAE; item |= (item >> 24);
+        sum[idx] += item % 13;  // 相邻元素共享缓存行
+    }
+}`,
+                        after: `struct alignas(64) Accumulator {   // 每个独占一个缓存行
+    std::atomic<uint32_t> value = 0;
+};
+std::vector<Accumulator> accumulators(thread_count);
+#pragma omp parallel num_threads(thread_count)
+{
+    auto& target = accumulators[omp_get_thread_num()];
+#pragma omp for
+    for (int i = 0; i < data.size(); i++) {
+        auto item = data[i];
+        item += 1000; item ^= 0xADEDAE; item |= (item >> 24);
+        target.value += item % 13;  // 无跨核缓存行争用
+    }
+}`,
+                        note: "<b>要点：</b>使用 <code>std::atomic</code> 防止编译器把 <code>target</code> 提升到寄存器，确保存储留在循环内；<span class='k'>伪共享是多线程扩展性不佳的常见隐形杀手</span>。"
+                    }
+                ]
+            },
+            {
+                cat: "Core Bound · 计算瓶颈", icon: "⚙️",
+                desc: "Core Bound 表示流水线因执行单元（端口）不足或指令依赖链而停顿，数据已就绪。典型手段：向量化、消除依赖链、内联、手写 intrinsics。",
+                items: [
+                    {
+                        name: "AoS → SoA 自动向量化", en: "Vectorization 1", speedup: "2.1x",
+                        tags: ["Core Bound", "序列比对", "SIMD"],
+                        src: "TMA/core_bound/vectorization_1/",
+                        principle: "序列比对逐条标量计算。将标量得分类型换成<b>定长向量（SoA）</b>，先转置序列，使一次迭代并行推进多个序列的对齐。",
+                        beforeLabel: "标量 int16_t",
+                        afterLabel: "向量 array<int16_t,K>",
+                        before: `using score_t  = int16_t;
+using column_t = std::array<score_t, sequence_size_v + 1>;
+
+for (size_t idx = 0; idx < sequences1.size(); ++idx) {
+    // 逐条序列标量计算对齐得分
+    ...
+    for (unsigned row = 1; row <= sequence1.size(); ++row) {
+        score_t best = last_diag + (s1[row-1]==s2[col-1] ? match : mismatch);
+        best = std::max(best, last_vertical_gap);
+        ...
+    }
+    result[idx] = score_column.back();
+}`,
+                        after: `using simd_score_t = std::array<int16_t, sequence_count_v>;
+using score_t  = simd_score_t;   // 标量 → 向量
+using column_t = std::array<score_t, sequence_size_v + 1>;
+
+auto trSeq1 = transpose(sequences1);  // AoS → SoA
+auto trSeq2 = transpose(sequences2);
+score_t match{}; match.fill(6);       // 常量广播到向量
+...
+for (unsigned row = 1; row <= trSeq1.size(); ++row) {
+    score_t best = last_diag;
+    for (size_t k = 0; k < sequence_count_v; ++k)
+        best[k] += (trSeq1[row-1][k]==trSeq2[col-1][k] ? match[k] : mismatch[k]);
+    // 内层 k 循环无依赖，可被自动向量化
+}`,
+                        note: "<b>要点：</b>关键是把“逐序列”改为“逐通道（lane）”，<span class='k'>使内层循环无跨迭代依赖，触发编译器自动向量化</span>。"
+                    },
+                    {
+                        name: "消除进位依赖链", en: "Vectorization 2", speedup: "20.9x",
+                        tags: ["Core Bound", "checksum", "依赖链"],
+                        src: "TMA/core_bound/vectorization_2/",
+                        principle: "互联网校验和每次迭代都做 <code>acc += (acc &lt; value)</code> 进位修正，形成无法向量化的串行依赖。将累加器<b>拓宽到 32 位</b>去掉逐次进位，最后统一修正。",
+                        beforeLabel: "16位 + 逐次进位",
+                        afterLabel: "32位 + 末尾修正",
+                        before: `uint16_t checksum(const Blob& blob) {
+    uint16_t acc = 0;
+    for (auto value : blob) {
+        acc += value;
+        acc += acc < value;  // 进位：依赖上一步 acc
+    }                        // → 串行依赖链，无法向量化
+    return acc;
+}`,
+                        after: `uint16_t checksum(const Blob& blob) {
+    uint32_t acc = 0;            // 拓宽，消除逐次进位
+    for (const auto value : blob)
+        acc += value;            // 无依赖，可自动向量化
+
+    auto high = acc >> 16, low = acc & 0xFFFFu;  // 末尾回卷
+    acc = low + high;
+    high = acc >> 16; low = acc & 0xFFFFu;       // 最多一次进位
+    acc = low + high;
+    return static_cast<uint16_t>(acc);
+}`,
+                        note: "<b>要点：</b>64K × 65535 &lt; 2³²，因此 32 位累加不会溢出，<span class='k'>去掉循环携带依赖后获得 20.9x 加速</span>。"
+                    },
+                    {
+                        name: "函数内联", en: "Function Inlining", speedup: "1.63x",
+                        tags: ["Core Bound", "排序", "qsort→std::sort"],
+                        src: "TMA/core_bound/function_inlining_1/",
+                        principle: "<code>qsort</code> 通过函数指针调用比较器，无法内联，每次比较都有调用开销且参数为 <code>void*</code>。改用 <code>std::sort</code> + lambda，比较器被内联。",
+                        beforeLabel: "qsort + 函数指针",
+                        afterLabel: "std::sort + lambda",
+                        before: `static int originalCompare(const void* lhs, const void* rhs) {
+    auto& a = *reinterpret_cast<const S*>(lhs);
+    auto& b = *reinterpret_cast<const S*>(rhs);
+    if (a.key1 < b.key1) return -1;
+    if (a.key1 > b.key1) return  1;
+    if (a.key2 < b.key2) return -1;
+    if (a.key2 > b.key2) return  1;
+    return 0;
+}
+void solution(std::array<S,N>& arr) {
+    qsort(arr.data(), arr.size(), sizeof(S), originalCompare);
+}`,
+                        after: `void solution(std::array<S,N>& arr) {
+    // lambda 比较器可被完全内联，无调用开销
+    std::sort(arr.begin(), arr.end(), [](const S& a, const S& b) {
+        return a.key1 < b.key1 || (a.key1 == b.key1 && a.key2 < b.key2);
+    });
+}`,
+                        note: "<b>要点：</b>剖析中若看到函数的 prologue/epilogue 很热，<span class='k'>它就是内联候选</span>；模板/lambda 使类型已知，还能触发更多优化。"
+                    },
+                    {
+                        name: "SSE4.1 向量前缀和", en: "Compiler Intrinsics 1", speedup: "1.14x",
+                        tags: ["Core Bound", "intrinsics", "滑动窗口"],
+                        src: "TMA/core_bound/compiler_intrinsics_1/",
+                        principle: "图像平滑的滑动窗口求和本质是前缀和，存在串行依赖，编译器难以向量化。手写 <b>SSE4.1</b> 每次处理 8 个元素，用移位相加实现向量前缀和。",
+                        beforeLabel: "标量滑动窗口",
+                        afterLabel: "SSE4.1 前缀和",
+                        before: `// 主循环：逐元素滑动窗口
+for (; pos < limit; ++pos) {
+    currentSum -= input[pos - radius - 1];
+    currentSum += input[pos + radius];
+    output[pos] = currentSum;   // 依赖上一个 currentSum
+}`,
+                        after: `__m128i current = _mm_set1_epi16(currentSum);
+for (; i + 7 < limit - pos; i += 8) {
+    __m128i sub = _mm_cvtepu8_epi16(_mm_loadu_si64(subtractPtr + i));
+    __m128i add = _mm_cvtepu8_epi16(_mm_loadu_si64(addPtr + i));
+    __m128i diff = _mm_sub_epi16(add, sub);
+    // 向量前缀和：移位 + 相加
+    __m128i s = _mm_add_epi16(diff, _mm_slli_si128(diff, 2));
+    s = _mm_add_epi16(s, _mm_slli_si128(s, 4));
+    s = _mm_add_epi16(s, _mm_slli_si128(s, 8));
+    __m128i result = _mm_add_epi16(s, current);
+    _mm_storeu_si128((__m128i*)(outputPtr + i), result);
+    currentSum = (uint16_t)_mm_extract_epi16(result, 7);
+    current = _mm_set1_epi16(currentSum);
+}`,
+                        note: "<b>要点：</b>当编译器无法自动向量化（如前缀和、进位）时，<span class='k'>手写 intrinsics 是最后手段</span>；本例受边界处理拖累，加速比仅 1.14x。"
+                    },
+                    {
+                        name: "AVX2 批量查找最长行", en: "Compiler Intrinsics 2", speedup: "15.1x",
+                        tags: ["Core Bound", "AVX2", "字符串"],
+                        src: "TMA/core_bound/compiler_intrinsics_2/",
+                        principle: "查找文件最长行需逐字符判断 <code>'\\n'</code>。用 <b>AVX2</b> 一次加载 32 字节并与 <code>'\\n'</code> 并行比较，用 <code>movemask</code> 提取换行位置。",
+                        beforeLabel: "逐字符扫描",
+                        afterLabel: "AVX2 32字节/次",
+                        before: `unsigned original_solution(const std::string& in) {
+    unsigned longest = 0, cur = 0;
+    for (auto s : in) {
+        if (s == '\\n') {
+            longest = std::max(cur, longest);
+            cur = 0;
+        } else {
+            cur++;
+        }
+    }
+    return std::max(cur, longest);
+}`,
+                        after: `const __m256i eol = _mm256_set1_epi8('\\n');
+for (; pos + 32 < len; pos += 32) {
+    __m256i vect = _mm256_loadu_si256((const __m256i*)buffer);
+    __m256i mask8 = _mm256_cmpeq_epi8(vect, eol);
+    uint32_t mask = _mm256_movemask_epi8(mask8);  // 32 位掩码
+    while (mask) {
+        int p = __builtin_ctz(mask);   // 最低位 1 = 换行位置
+        longest = std::max((pos-curBegin)+p, longest);
+        curBegin += ((pos-curBegin)+p) + 1;
+        mask >>= (p + 1);
+    }
+    buffer += 32;
+}`,
+                        note: "<b>要点：</b>一次处理 32 字节，用位操作定位换行。<span class='k'>加速比高度依赖输入数据</span>（长行多则快，短行密集时可能反而变慢）。"
+                    },
+                    {
+                        name: "并行依赖链", en: "Dependency Chains", speedup: "3.6x",
+                        tags: ["Core Bound", "链表", "指针追逐"],
+                        src: "TMA/core_bound/dep_chains_1/",
+                        principle: "链表遍历是天然的长依赖链（取节点 N+1 需先取 N）。在 O(N²) 查找中，一次从 l1 取 <b>M=4 个值</b>，只遍历 l2 一次，重叠多条依赖链。",
+                        beforeLabel: "逐值查找",
+                        afterLabel: "M=4 批量查找",
+                        before: `unsigned original_solution(List* l1, List* l2) {
+    unsigned retVal = 0;
+    List* head2 = l2;
+    while (l1) {
+        unsigned v = l1->value;
+        l2 = head2;
+        while (l2) {                 // 每次只查一个值
+            if (l2->value == v) { retVal += getSumOfDigits(v); break; }
+            l2 = l2->next;           // 串行指针追逐
+        }
+        l1 = l1->next;
+    }
+    return retVal;
+}`,
+                        after: `template <int M>
+unsigned solutionM(List* l1, List* l2) {
+    unsigned retVal = 0; List* head2 = l2;
+    for (int i = 0; i < length1 / M; i++) {
+        std::array<unsigned, M> vals;
+        for (int j = 0; j < M; j++) { vals[j] = l1->value; l1 = l1->next; }
+        l2 = head2; int found = 0;
+        while (l2) {                 // 一次遍历同时比对 M 个值
+            for (int j = 0; j < M; j++)
+                if (l2->value == vals[j]) { retVal += getSumOfDigits(l2->value); if (++found==M) break; }
+            if (found == M) break;
+            l2 = l2->next;
+        }
+    }
+    /* 尾部逐个处理 */
+}`,
+                        note: "<b>要点：</b>批量处理让多条指针追逐依赖链<span class='k'>在乱序执行中重叠</span>，提升 ILP；配合 arena 分配器改善节点局部性。"
+                    }
+                ]
+            },
+            {
+                cat: "Bad Speculation · 分支预测", icon: "🎲",
+                desc: "Bad Speculation 表示流水线因分支预测失败而做了无用功（被清空的错误推测指令）。典型手段：用无分支代码 / 查找表替代难以预测的分支。",
+                items: [
+                    {
+                        name: "查找表替代分支", en: "Lookup Tables", speedup: "1.87x",
+                        tags: ["Bad Speculation", "无分支", "直方图"],
+                        src: "TMA/bad_speculation/lookup_tables_1/",
+                        principle: "将 [0,150] 的值映射到桶，原本是 7 层 <code>if/else</code> 比较链。输入随机时分支难以预测，大量误预测惩罚。改用<b>查找表直接索引</b>，消除所有分支。",
+                        beforeLabel: "7 层 if/else",
+                        afterLabel: "查找表索引",
+                        before: `static size_t mapToBucket(size_t v) {
+    if      (v < 13)  return 0;   // 随机输入下
+    else if (v < 29)  return 1;   // 每个分支都
+    else if (v < 41)  return 2;   // 难以预测，
+    else if (v < 53)  return 3;   // 导致大量
+    else if (v < 71)  return 4;   // 分支误预测
+    else if (v < 83)  return 5;   // (Bad Speculation)
+    else if (v < 100) return 6;
+    return DEFAULT_BUCKET;
+}`,
+                        after: `// 预计算查找表：值 → 桶，无分支
+static const int buckets[100] = {
+    0,0,0,0,0,0,0,0,0,0,0,0,0,   // 0-12  -> 0
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1, // 13-28 -> 1
+    2,2, /* ... */ 6,6,6,6,6,6,   // 依此类推
+};
+
+static std::size_t mapToBucket(std::size_t v) {
+    if (v < sizeof(buckets)/sizeof(buckets[0]))
+        return buckets[v];   // 直接查表，无分支
+    return DEFAULT_BUCKET;
+}`,
+                        note: "<b>要点：</b>把控制流转为数据访问，从根本上消除误预测。<span class='k'>若值域更大（如 [0,10000]），可用公式计算桶边界或分段查表</span>。"
+                    }
+                ]
+            },
+            {
+                cat: "Misc · 编译器优化", icon: "🛠️",
+                desc: "不属于单一硬件瓶颈、但影响全局的编译器与算法级手段：链接时优化（LTO）、反馈式优化（PGO），以及最根本的算法复杂度优化。",
+                items: [
+                    {
+                        name: "链接时优化", en: "Link-Time Optimization (LTO)", speedup: "1.50x",
+                        tags: ["Misc", "跨编译单元", "内联"],
+                        src: "TMA/misc/lto/",
+                        principle: "普通编译下，跨编译单元（.cpp）的小函数（如 <code>vdot</code>、<code>clamp</code>）无法内联。LTO 在链接阶段合并中间表示，使<b>跨文件内联与全局优化</b>成为可能。",
+                        beforeLabel: "普通分开编译",
+                        afterLabel: "-flto 链接时优化",
+                        before: `# CMakeLists.txt — 无 LTO
+set(CMAKE_CXX_FLAGS "-O3 \${CMAKE_CXX_FLAGS}")
+
+# ao_helpers.cpp 中的小函数无法被其他
+# 编译单元（如 ao_intersect.cpp）内联：
+double vdot(vec v0, vec v1) {
+    return v0.x*v1.x + v0.y*v1.y + v0.z*v1.z;
+}`,
+                        after: `# CMakeLists.txt — 启用 LTO
+set(CMAKE_CXX_FLAGS "-flto \${CMAKE_CXX_FLAGS}")
+
+# 链接时合并 IR，vdot / clamp 等小函数
+# 可跨编译单元内联到调用点，消除调用开销
+# 并触发常量传播、死代码删除等后续优化。
+double vdot(vec v0, vec v1) {
+    return v0.x*v1.x + v0.y*v1.y + v0.z*v1.z;
+}`,
+                        note: "<b>要点：</b>LTO 尤其适合多文件、频繁跨模块调用小函数的项目（如光线追踪 AO 渲染）；代价是链接时间变长。"
+                    },
+                    {
+                        name: "反馈式优化", en: "Profile-Guided Optimization (PGO)", speedup: "≥ 5%",
+                        tags: ["Misc", "LUA 解释器", "三步构建"],
+                        src: "TMA/misc/pgo/",
+                        principle: "PGO 先用典型输入采集运行剖面，再让编译器<b>基于真实热度数据</b>优化内联决策、代码布局、寄存器分配与分支布局。",
+                        beforeLabel: "普通 -O3 构建",
+                        afterLabel: "插桩 → 训练 → 重建",
+                        before: `# 一次性构建，编译器只能靠静态启发式猜测
+# 哪些分支热、哪些函数值得内联
+cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . --target lab
+
+# → 对内联/代码布局的决策可能与
+#   实际运行的 LUA 脚本不匹配`,
+                        after: `# 1) 插桩构建，生成带计数器的二进制
+cmake -DCMAKE_CXX_FLAGS="-fprofile-generate" .. && cmake --build .
+# 2) 用典型输入训练，采集剖面数据
+./lab bench/*.lua
+llvm-profdata merge -o lua.profdata default_*.profraw
+# 3) 用剖面数据重新构建
+cmake -DCMAKE_CXX_FLAGS="-fprofile-use=lua.profdata" .. && cmake --build .`,
+                        note: "<b>要点：</b>剖面数据的质量与代表性至关重要；<span class='k'>对目标脚本提速，但可能对其他输入反而变慢</span>（生产环境需谨慎）。预期提速至少 5%。"
+                    },
+                    {
+                        name: "算法优化", en: "Warmup: O(N) → O(1)", speedup: "70x",
+                        tags: ["Misc", "热身", "数学公式"],
+                        src: "TMA/misc/warmup/",
+                        principle: "热身实验：计算 1..N 的和。与其遍历数组逐个累加（O(N)），不如直接用<b>等差数列求和公式</b>（O(1)）。最好的优化是根本不做多余的计算。",
+                        beforeLabel: "O(N) 遍历求和",
+                        afterLabel: "O(1) 公式",
+                        before: `// 逐个累加数组元素
+int solution(int* arr, int N) {
+    int sum = 0;
+    for (int i = 0; i < N; i++) {
+        sum += arr[i];   // O(N) 次加法 + 访存
+    }
+    return sum;
+}`,
+                        after: `// 高斯求和公式：1+2+...+N = N(N+1)/2
+int solution(int* arr, int N) {
+    return (N * (N + 1)) / 2;   // O(1)，无需访问 arr
+}`,
+                        note: "<b>要点：</b>微观优化前先看算法。<span class='k'>复杂度从 O(N) 降为 O(1) 带来 70x 加速</span>，远超任何指令级手段。"
+                    }
+                ]
+            }
+        ];
+
+        /* ============ 渲染 ============ */
+        function buildNav() {
+            const nav = document.getElementById('nav');
+            nav.innerHTML = DATA.map((sec, si) => {
+                const items = sec.items.map((it, ii) =>
+                    `<a class="item" href="#c-${si}-${ii}">${it.name}<span class="sp">${it.speedup || ''}</span></a>`).join('');
+                return `<div class="nav-group"><div class="nav-cat">${sec.icon} ${sec.cat}</div>${items}</div>`;
+            }).join('');
+        }
+        function buildStats() {
+            const items = DATA.reduce((a, s) => a + s.items.length, 0);
+            document.getElementById('stats').innerHTML =
+                `<div class="stat"><b>${DATA.length}</b><span>瓶颈类别</span></div>` +
+                `<div class="stat"><b>${items}</b><span>优化实验</span></div>` +
+                `<div class="stat"><b>${items * 2}</b><span>前后代码对照</span></div>` +
+                `<div class="stat"><b>TMA</b><span>自顶向下分析</span></div>`;
+        }
+        function buildSections() {
+            const root = document.getElementById('sections');
+            root.innerHTML = DATA.map((sec, si) => {
+                const cards = sec.items.map((it, ii) => {
+                    const tags = (it.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+                    const badge = it.speedup ? `<span class="badge">⚡ ${it.speedup}</span>` : '';
+                    const note = it.note ? `<div class="note">${it.note}</div>` : '';
+                    return `<div class="card" id="c-${si}-${ii}">
+        <div class="card-top">
+          <h4>${it.name}<span class="en">${it.en || ''}</span></h4>
+          <div class="tags">${badge}${tags}</div>
+        </div>
+        <div class="principle">${it.principle}</div>
+        ${it.src ? `<div class="src">实验目录：<code>${it.src}</code></div>` : ''}
+        <div class="compare">
+          <div class="col before">
+            <div class="col-head"><span class="dot"></span>优化前<span class="lbl">${it.beforeLabel || 'Baseline'}</span></div>
+            <pre><code>${highlight(it.before)}</code></pre>
+          </div>
+          <div class="col after">
+            <div class="col-head"><span class="dot"></span>优化后<span class="lbl">${it.afterLabel || 'Solution'}</span></div>
+            <pre><code>${highlight(it.after)}</code></pre>
+          </div>
+        </div>
+        ${note}
+      </div>`;
+                }).join('');
+                return `<section class="section" id="s-${si}">
+      <div class="section-head"><span class="idx">${String(si + 1).padStart(2, '0')}</span><h3>${sec.icon} ${sec.cat}</h3></div>
+      <p class="section-desc">${sec.desc}</p>
+      ${cards}
+    </section>`;
+            }).join('');
+        }
+        function bindSearch() {
+            const input = document.getElementById('search');
+            input.addEventListener('input', () => {
+                const q = input.value.trim().toLowerCase();
+                document.querySelectorAll('.card').forEach(card => {
+                    card.classList.toggle('hidden', q && card.textContent.toLowerCase().indexOf(q) < 0);
+                });
+                document.querySelectorAll('.section').forEach(sec => {
+                    sec.classList.toggle('hidden', q && sec.querySelectorAll('.card:not(.hidden)').length === 0);
+                });
+            });
+        }
+        function bindScrollSpy() {
+            const links = [...document.querySelectorAll('.nav a.item')];
+            const obs = new IntersectionObserver(entries => {
+                entries.forEach(e => {
+                    if (e.isIntersecting) {
+                        links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + e.target.id));
+                    }
+                });
+            }, { rootMargin: '-60px 0px -75% 0px', threshold: 0 });
+            document.querySelectorAll('.card').forEach(c => obs.observe(c));
+        }
+        function bindTheme() {
+            const btn = document.getElementById('themeBtn');
+            if (localStorage.getItem('perf-theme') === 'light') { document.documentElement.setAttribute('data-theme', 'light'); btn.textContent = '☀️ 浅色'; }
+            btn.addEventListener('click', () => {
+                const light = document.documentElement.getAttribute('data-theme') === 'light';
+                if (light) { document.documentElement.removeAttribute('data-theme'); btn.textContent = '🌙 深色'; localStorage.setItem('perf-theme', 'dark'); }
+                else { document.documentElement.setAttribute('data-theme', 'light'); btn.textContent = '☀️ 浅色'; localStorage.setItem('perf-theme', 'light'); }
+            });
+            document.getElementById('topBtn').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        }
+        buildStats(); buildNav(); buildSections(); bindSearch(); bindScrollSpy(); bindTheme();
+    </script>
+</body>
+
+</html>
