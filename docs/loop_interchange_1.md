@@ -211,3 +211,17 @@ i-j-k (原始): 内层 k 循环访问 b[k][j]
 i-k-j (优化): 内层 j 循环访问 b[k][j]
   → b[k][0], b[k][1], b[k][2], ...  stride = 4B    ✓ 连续
 ```
+
+---
+
+## 延伸阅读：Intel Advisor 视角的同一负载
+
+本文用的是 TMA（`perf stat --topdown` / `toplev.py`）定位瓶颈，回答的是"属于哪一类瓶颈"。若要回答"离硬件上限还差多少、该往哪个方向优化"，需要循环级 + Roofline 视角：
+
+- [Intel Advisor 性能分析指导](intel_advisor.md) 第 9 章 —— 本实验优化前后的完整 Advisor 采集（Survey / Trip Counts & FLOP / Roofline / MAP / Dependencies），关键补充结论：
+  - 交换前内层循环 `Scalar`、5.954 GFLOPS、35.7 GB/s；交换后 `Vectorized (Body)` / **AVX2**、**37.651 GFLOPS**、**225.9 GB/s**
+  - 算术强度 **AI 恒为 0.167 FLOP/Byte**（逻辑流量一点没减），提升的是"单位时间能搬多少字节" → Roofline 数据点**纵向**移动
+  - MAP：常量步长 400（严重度 3）→ 全部单位步长；每实例 footprint 623 KB → 3 KB
+  - Dependencies：`WAW` Error（归约累加）→ 无依赖，这正是 GCC 报 `complicated access pattern` 的根因
+  - 下一步：分块（tiling）提高 AI，让点**横向**移动 —— 见 [loop_tiling_1](loop_tiling_1.md)
+

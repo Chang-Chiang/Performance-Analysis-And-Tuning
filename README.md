@@ -119,6 +119,8 @@ mindmap
 > `loop_interchange_before/after.c`、
 > `loop_unrolling_before/after.c` 等对比测试
 
+> 工具指导：[Intel Advisor 性能分析指导](docs/intel_advisor.md) — Survey / Trip Counts & FLOP / **Roofline** / MAP / Dependencies 的 CLI 与 GUI 用法，附 `loop_interchange_1` 优化前后完整对比分析
+
 ### 3. [硬件配置与调优](docs/hardware.md)
 
 ```mermaid
@@ -725,7 +727,7 @@ flowchart TD
 | 实验 | 优化技术 | 加速比 | 文档 |
 |------|---------|--------|------|
 | [data_packing](TMA/memory_bound/data_packing/) | 结构体压缩（位域 + float） | 7.5x | [docs/data_packing.md](docs/data_packing.md) |
-| [loop_interchange_1](TMA/memory_bound/loop_interchange_1/) | 循环交换（矩阵乘法 i-j-k → i-k-j） | 6.9x | [docs/loop_interchange_1.md](docs/loop_interchange_1.md) |
+| [loop_interchange_1](TMA/memory_bound/loop_interchange_1/) | 循环交换（矩阵乘法 i-j-k → i-k-j） | 6.9x | [docs/loop_interchange_1.md](docs/loop_interchange_1.md)、[Intel Advisor 分析](docs/intel_advisor.md) |
 | [loop_interchange_2](TMA/memory_bound/loop_interchange_2/) | 循环交换（高斯模糊列优先 → 行优先） | 9.7x | [docs/loop_interchange_2.md](docs/loop_interchange_2.md) |
 | [loop_tiling_1](TMA/memory_bound/loop_tiling_1/) | 循环分块（矩阵转置缓存友好） | 1.75x | [docs/loop_tiling_1.md](docs/loop_tiling_1.md) |
 | [swmem_prefetch_1](TMA/memory_bound/swmem_prefetch_1/) | 软件预取（哈希表随机查找） | 3.1x | [docs/swmem_prefetch_1.md](docs/swmem_prefetch_1.md) |

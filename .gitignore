@@ -49,3 +49,10 @@ loop_unrolling_*
 
 /TMA/tools/benchmark/
 build*
+
+config
+advisor*
+adv_*
+report*
+
+*bak
