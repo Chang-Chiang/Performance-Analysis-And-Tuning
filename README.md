@@ -5,6 +5,45 @@
 > 2. 应用理论知识进行项目实战，性能分析与优化
 > 3. 总结
 
+## 📌 学习笔记（按号沉淀 · 理论主干 + 代码实战）
+
+> 位置：[`docs/notes/`](docs/notes/)
+> 结构：每篇 = **理论主干 + 关键公式/命令 + 本机实测数据 + 一句话收口**，编号即学习顺序。
+
+| 编号 | 主题 | 嵌入实战 |
+|------|------|---------|
+| 00 | [学习路径索引](docs/notes/00-README.md) | — |
+| 01 | [性能度量指标](docs/notes/01-性能度量指标.md) | ① max_sum 算法杠杆 |
+| 02 | [性能分析工具](docs/notes/02-性能分析工具.md) | — |
+| 03 | [TMA 自顶向下分析](docs/notes/03-TMA自顶向下分析.md) | ⑤ 循环交换 + IPC |
+| 04 | [编译器概述](docs/notes/04-编译器概述.md) | ③ `-O0`vs`-O2` · ④ `-Rpass` |
+| 05 | [程序编写优化](docs/notes/05-程序编写优化.md) | ①② |
+| 06 | [单核 ILP/SIMD](docs/notes/06-单核ILP-SIMD.md) | ⑧ AoS vs SoA |
+| 07 | [访存优化](docs/notes/07-访存优化.md) | 交叉引用 ②⑤⑥⑧ |
+| 08 | [OpenMP 优化](docs/notes/08-OpenMP优化.md) | ⑥ 伪共享 · ⑦ 加速比曲线 |
+| 09 | [CUDA 优化](docs/notes/09-CUDA优化.md) | ⑨ RTX 5070 Ti 三档布局 2.21x |
+| 10 | [MPI 优化](docs/notes/10-MPI优化.md) | ⑩ 加速比 6.89x + α+β·n 合并消息 4~5x |
+| 11 | [TBB 优化](docs/notes/11-TBB优化.md) | 矩阵扫描~10x · pipeline 10x · task_group 7x |
+| 20 | [单核优化全景复盘](docs/notes/20-单核优化全景复盘.md) | 诊断→开药→验证闭环 |
+| 21 | [并行优化全景复盘](docs/notes/21-并行优化全景复盘.md) | 并行三问 + 四大母题 |
+| 30 | [测量纪律手册](docs/notes/30-测量纪律手册.md) | 元教训与陷阱清单 |
+| 40 | [实战 · warmup](docs/notes/40-实战-warmup.md) | 🏆 **109x** 算法级 O(N)→O(1) **开篇** |
+| 41 | [实战 · loop_interchange_1](docs/notes/41-实战-loop_interchange_1.md) | 6.81x 本机复现工程预置实验 |
+| 42 | [实战 · data_packing](docs/notes/42-实战-data_packing.md) | 7.58x 结构体压缩 · LLC miss↓20x |
+| 43 | [实战 · loop_interchange_2](docs/notes/43-实战-loop_interchange_2.md) | 9.56x **TLB Bound** 标本 · dTLB miss↓5418x |
+| 44 | [实战 · loop_tiling_1](docs/notes/44-实战-loop_tiling_1.md) | 1.62x tiling 有副作用 · 指令数反↑1.73x |
+| 45 | [实战 · swmem_prefetch_1](docs/notes/45-实战-swmem_prefetch_1.md) | 3.13x 预取隐藏延迟 · miss 不变 |
+| 46 | [实战 · false_sharing_1](docs/notes/46-实战-false_sharing_1.md) | ⚠️ 本机 0.98x 复现失败 · `30` 元教训活标本 |
+| 47 | [实战 · vectorization_1](docs/notes/47-实战-vectorization_1.md) | 2.1x AoS→SoA 不消依赖仅小赢 |
+| 48 | [实战 · vectorization_2](docs/notes/48-实战-vectorization_2.md) | **21.0x** 消依赖链→width 8 AVX2 · Core_Bound 镇箱之宝 |
+| 49 | [实战 · compiler_intrinsics_1](docs/notes/49-实战-compiler_intrinsics_1.md) | ⚠️ 1.14x 手写 SIMD 不划算（基线 IPC 已 3.93） |
+| 50 | [实战 · compiler_intrinsics_2](docs/notes/50-实战-compiler_intrinsics_2.md) | 13.7x 手写 SIMD 划算（基线 branch-miss 爆表） |
+| 51 | [实战 · dep_chains_1](docs/notes/51-实战-dep_chains_1.md) | 3.49x 链表 M 路并行（IPC 1.48→6.56） |
+| 52 | [实战 · function_inlining_1](docs/notes/52-实战-function_inlining_1.md) | 1.63x qsort → std::sort+lambda |
+| 53 | [实战 · lookup_tables_1](docs/notes/53-实战-lookup_tables_1.md) | 1.91x 查表代分支（唯一 Bad_Spec） |
+| 54 | [实战 · lto](docs/notes/54-实战-lto.md) | 1.51x 跨翻译单元内联 |
+| 55 | [实战 · pgo](docs/notes/55-实战-pgo.md) | 机制分析（本机未实跑） |
+
 ## 目录
 
 ```mermaid
@@ -21,6 +60,7 @@ mindmap
       8. OpenMP 程序优化
       9. CUDA 程序优化
       10. MPI 程序优化
+      11. TBB 程序优化
     二. TMA 性能分析与优化
     三. 总结
     四. 性能分析优化实例
@@ -28,7 +68,7 @@ mindmap
 
 ## 一. Basis 性能优化
 
-### 1. [性能度量指标](docs/performance_metrics.md)
+### 1. [性能度量指标](docs/theory/performance_metrics.md)
 
 ```mermaid
 mindmap
@@ -66,7 +106,7 @@ mindmap
 ```
 
 
-### 2. [性能分析测量](docs/performance_analysis.md)
+### 2. [性能分析测量](docs/theory/performance_analysis.md)
 
 ```mermaid
 mindmap
@@ -119,9 +159,9 @@ mindmap
 > `loop_interchange_before/after.c`、
 > `loop_unrolling_before/after.c` 等对比测试
 
-> 工具指导：[Intel Advisor 性能分析指导](docs/intel_advisor.md) — Survey / Trip Counts & FLOP / **Roofline** / MAP / Dependencies 的 CLI 与 GUI 用法，附 `loop_interchange_1` 优化前后完整对比分析
+> 工具指导：[Intel Advisor 性能分析指导](docs/theory/intel_advisor.md) — Survey / Trip Counts & FLOP / **Roofline** / MAP / Dependencies 的 CLI 与 GUI 用法，附 `loop_interchange_1` 优化前后完整对比分析
 
-### 3. [硬件配置与调优](docs/hardware.md)
+### 3. [硬件配置与调优](docs/theory/hardware.md)
 
 ```mermaid
 mindmap
@@ -163,7 +203,7 @@ mindmap
       网卡多队列与 Ring Buffer
 ```
 
-### 4. [编译器概述](docs/compiler.md)
+### 4. [编译器概述](docs/theory/compiler.md)
 
 ```mermaid
 mindmap
@@ -216,7 +256,7 @@ mindmap
       数学库 BLAS/MKL
 ```
 
-### 5. [程序编写优化](docs/program_optimization.md)
+### 5. [程序编写优化](docs/theory/program_optimization.md)
 
 ```mermaid
 mindmap
@@ -298,7 +338,7 @@ mindmap
       - 生成选择指令 [`select_optimization.cpp`](basis/Statement/select_optimization.cpp)
       - 运用条件编译 [`conditional_compilation.cpp`](basis/Statement/conditional_compilation.cpp)
 
-### 6. [单核优化](docs/single_core_optimization.md)
+### 6. [单核优化](docs/theory/single_core_optimization.md)
 
 ```mermaid
 mindmap
@@ -345,7 +385,7 @@ mindmap
    5. 循环完全展开 [`loop_unroll.cpp`](basis/ILP/loop_unroll.cpp)
    6. 全局不变量合并 [`global_invariant.cpp`](basis/ILP/global_invariant.cpp)
 
-### 7. [访存优化](docs/memory_optimization.md) [`basis/Memory/`](basis/Memory/)
+### 7. [访存优化](docs/theory/memory_optimization.md) [`basis/Memory/`](basis/Memory/)
 
 ```mermaid
 mindmap
@@ -401,7 +441,7 @@ mindmap
    4. 结构体拆分 [`struct_splitting.c`](basis/Memory/DataLayout/struct_splitting.c)
    5. 结构体数组转换 [`struct_array_conversion.c`](basis/Memory/DataLayout/struct_array_conversion.c)
 
-### 8. [OpenMP 程序优化](docs/openmp_optimization.md) [`basis/OpenMP/`](basis/OpenMP/)
+### 8. [OpenMP 程序优化](docs/theory/openmp_optimization.md) [`basis/OpenMP/`](basis/OpenMP/)
 
 ```mermaid
 mindmap
@@ -447,7 +487,7 @@ mindmap
    2. 线程调度配置策略
       - [`schedule_static.c`](basis/OpenMP/LoadBalancing/schedule_static.c) / [`schedule_dynamic.c`](basis/OpenMP/LoadBalancing/schedule_dynamic.c) / [`schedule_guided.c`](basis/OpenMP/LoadBalancing/schedule_guided.c)
 
-### 9. [CUDA 程序优化](docs/cuda_optimization.md) [`basis/CUDA/`](basis/CUDA/)
+### 9. [CUDA 程序优化](docs/theory/cuda_optimization.md) [`basis/CUDA/`](basis/CUDA/)
 
 ```mermaid
 mindmap
@@ -486,7 +526,7 @@ mindmap
 6. 循环展开 [`LoopUnroll/`](basis/CUDA/LoopUnroll/)
    - [`loop_unroll.cu`](basis/CUDA/LoopUnroll/loop_unroll.cu) — 共享内存 + 循环展开
 
-### 10. [MPI 程序优化](docs/mpi_optimization.md) [`basis/MPI/`](basis/MPI/)
+### 10. [MPI 程序优化](docs/theory/mpi_optimization.md) [`basis/MPI/`](basis/MPI/)
 
 ```mermaid
 mindmap
@@ -524,7 +564,61 @@ mindmap
 5. 冗余计算减少通信 [`RedundantComputation/`](basis/MPI/RedundantComputation/)
    - [`prime_redundant.c`](basis/MPI/RedundantComputation/prime_redundant.c) — 每个进程独立生成素数表消除通信
 
-## 二. [TMA 性能分析与优化](docs/tma.md)
+### 11. [TBB 程序优化](docs/notes/11-TBB优化.md) [`basis/TBB/`](basis/TBB/)
+
+```mermaid
+mindmap
+  root((TBB 程序优化))
+    编程简介
+      parallel_for 递归对分
+      矩阵乘并行化
+    并行算法
+      parallel_reduce 归约
+      parallel_scan 前缀和
+      parallel_invoke / sort
+      parallel_pipeline 流水
+    动态任务
+      task_group 递归分治
+      工作窃取负载均衡
+    分区器
+      auto / simple / static
+      affinity 亲和
+    避免伪共享
+      cache_aligned_allocator
+      parallel_reduce
+    并发容器
+      concurrent_vector
+      concurrent_hash_map
+      concurrent_queue
+    流图与分配器
+      flow_graph DAG
+      scalable_allocator
+```
+
+1. TBB 编程简介 [`Basics/`](basis/TBB/Basics/)
+   1. 第一个 TBB 程序 [`tbb_hello.cpp`](basis/TBB/Basics/tbb_hello.cpp) → [`parallel_for_basics.cpp`](basis/TBB/Basics/parallel_for_basics.cpp)
+   2. TBB 版矩阵乘 [`matrix_multiply_serial.cpp`](basis/TBB/Basics/matrix_multiply_serial.cpp) → [`matrix_multiply_parallel.cpp`](basis/TBB/Basics/matrix_multiply_parallel.cpp)
+2. 并行算法模板 [`ParallelAlgorithms/`](basis/TBB/ParallelAlgorithms/)
+   1. parallel_reduce 归约 [`parallel_reduce_sum.cpp`](basis/TBB/ParallelAlgorithms/parallel_reduce_sum.cpp)
+   2. parallel_scan 前缀和 [`parallel_scan_prefix.cpp`](basis/TBB/ParallelAlgorithms/parallel_scan_prefix.cpp)
+   3. parallel_invoke + parallel_sort [`parallel_invoke_sort.cpp`](basis/TBB/ParallelAlgorithms/parallel_invoke_sort.cpp)
+   4. parallel_pipeline 流水 [`parallel_pipeline_filter.cpp`](basis/TBB/ParallelAlgorithms/parallel_pipeline_filter.cpp)
+3. 动态任务与工作窃取 [`TaskGraph/`](basis/TBB/TaskGraph/)
+   1. task_group 递归分治 [`task_group_fibonacci.cpp`](basis/TBB/TaskGraph/task_group_fibonacci.cpp)
+   2. 工作窃取 vs 静态划分 [`work_stealing.cpp`](basis/TBB/TaskGraph/work_stealing.cpp)
+4. 分区器 / 负载均衡 [`LoadBalancing/`](basis/TBB/LoadBalancing/)
+   - [`simple_partitioner.cpp`](basis/TBB/LoadBalancing/simple_partitioner.cpp) / [`auto_partitioner_nested.cpp`](basis/TBB/LoadBalancing/auto_partitioner_nested.cpp) / [`affinity_partitioner.cpp`](basis/TBB/LoadBalancing/affinity_partitioner.cpp)
+5. 避免伪共享 [`FalseSharing/`](basis/TBB/FalseSharing/)
+   1. 分析伪共享 [`false_sharing_analysis.cpp`](basis/TBB/FalseSharing/false_sharing_analysis.cpp)
+   2. cache_aligned 消伪共享 [`cache_aligned_counter.cpp`](basis/TBB/FalseSharing/cache_aligned_counter.cpp)
+   3. reduction 消伪共享 [`reduction_avoid_false_sharing.cpp`](basis/TBB/FalseSharing/reduction_avoid_false_sharing.cpp)
+6. 并发容器 [`ConcurrentContainers/`](basis/TBB/ConcurrentContainers/)
+   - [`concurrent_vector.cpp`](basis/TBB/ConcurrentContainers/concurrent_vector.cpp) / [`concurrent_hash_map.cpp`](basis/TBB/ConcurrentContainers/concurrent_hash_map.cpp) / [`concurrent_queue.cpp`](basis/TBB/ConcurrentContainers/concurrent_queue.cpp)
+7. 流图与内存分配器 [`FlowGraph/`](basis/TBB/FlowGraph/) · [`MemoryAllocation/`](basis/TBB/MemoryAllocation/)
+   - [`graph_pipeline.cpp`](basis/TBB/FlowGraph/graph_pipeline.cpp) — flow_graph 任意 DAG
+   - [`scalable_allocator.cpp`](basis/TBB/MemoryAllocation/scalable_allocator.cpp) — 可扩展内存分配器
+
+## 二. [TMA 性能分析与优化](docs/theory/tma.md)
 
 ```mermaid
 mindmap
@@ -726,37 +820,37 @@ flowchart TD
 
 | 实验 | 优化技术 | 加速比 | 文档 |
 |------|---------|--------|------|
-| [data_packing](TMA/memory_bound/data_packing/) | 结构体压缩（位域 + float） | 7.5x | [docs/data_packing.md](docs/data_packing.md) |
-| [loop_interchange_1](TMA/memory_bound/loop_interchange_1/) | 循环交换（矩阵乘法 i-j-k → i-k-j） | 6.9x | [docs/loop_interchange_1.md](docs/loop_interchange_1.md)、[Intel Advisor 分析](docs/intel_advisor.md) |
-| [loop_interchange_2](TMA/memory_bound/loop_interchange_2/) | 循环交换（高斯模糊列优先 → 行优先） | 9.7x | [docs/loop_interchange_2.md](docs/loop_interchange_2.md) |
-| [loop_tiling_1](TMA/memory_bound/loop_tiling_1/) | 循环分块（矩阵转置缓存友好） | 1.75x | [docs/loop_tiling_1.md](docs/loop_tiling_1.md) |
-| [swmem_prefetch_1](TMA/memory_bound/swmem_prefetch_1/) | 软件预取（哈希表随机查找） | 3.1x | [docs/swmem_prefetch_1.md](docs/swmem_prefetch_1.md) |
-| [false_sharing_1](TMA/memory_bound/false_sharing_1/) | 消除伪共享（alignas(64)） | 15.8x | [docs/false_sharing.md](docs/false_sharing.md) |
+| [data_packing](TMA/memory_bound/data_packing/) | 结构体压缩（位域 + float） | 7.5x | [docs/experiments/memory_bound/data_packing.md](docs/experiments/memory_bound/data_packing.md) |
+| [loop_interchange_1](TMA/memory_bound/loop_interchange_1/) | 循环交换（矩阵乘法 i-j-k → i-k-j） | 6.9x | [docs/experiments/memory_bound/loop_interchange_1.md](docs/experiments/memory_bound/loop_interchange_1.md)、[Intel Advisor 分析](docs/theory/intel_advisor.md) |
+| [loop_interchange_2](TMA/memory_bound/loop_interchange_2/) | 循环交换（高斯模糊列优先 → 行优先） | 9.7x | [docs/experiments/memory_bound/loop_interchange_2.md](docs/experiments/memory_bound/loop_interchange_2.md) |
+| [loop_tiling_1](TMA/memory_bound/loop_tiling_1/) | 循环分块（矩阵转置缓存友好） | 1.75x | [docs/experiments/memory_bound/loop_tiling_1.md](docs/experiments/memory_bound/loop_tiling_1.md) |
+| [swmem_prefetch_1](TMA/memory_bound/swmem_prefetch_1/) | 软件预取（哈希表随机查找） | 3.1x | [docs/experiments/memory_bound/swmem_prefetch_1.md](docs/experiments/memory_bound/swmem_prefetch_1.md) |
+| [false_sharing_1](TMA/memory_bound/false_sharing_1/) | 消除伪共享（alignas(64)） | 15.8x | [docs/experiments/memory_bound/false_sharing.md](docs/experiments/memory_bound/false_sharing.md) |
 
 ### Core Bound 计算瓶颈
 
 | 实验 | 优化技术 | 加速比 | 文档 |
 |------|---------|--------|------|
-| [vectorization_1](TMA/core_bound/vectorization_1/) | 数据级并行（AoS → SoA + 自动向量化） | 2.1x | [docs/vectorization_1.md](docs/vectorization_1.md) |
-| [vectorization_2](TMA/core_bound/vectorization_2/) | 消除依赖链（uint16 → uint32 累加器） | 20.9x | [docs/vectorization_2.md](docs/vectorization_2.md) |
-| [compiler_intrinsics_1](TMA/core_bound/compiler_intrinsics_1/) | SSE4.1 intrinsics（滑动窗口前缀和） | 1.14x | [docs/compiler_intrinsics_1.md](docs/compiler_intrinsics_1.md) |
-| [compiler_intrinsics_2](TMA/core_bound/compiler_intrinsics_2/) | AVX2 intrinsics（批量查找换行符） | 15.1x | [docs/compiler_intrinsics_2.md](docs/compiler_intrinsics_2.md) |
-| [dep_chains_1](TMA/core_bound/dep_chains_1/) | 并行依赖链（M 路链表查找） | 3.6x | [docs/dependency_chains_1.md](docs/dependency_chains_1.md) |
-| [function_inlining_1](TMA/core_bound/function_inlining_1/) | 函数内联（qsort → std::sort + lambda） | 1.63x | [docs/function_inlining_1.md](docs/function_inlining_1.md) |
+| [vectorization_1](TMA/core_bound/vectorization_1/) | 数据级并行（AoS → SoA + 自动向量化） | 2.1x | [docs/experiments/core_bound/vectorization_1.md](docs/experiments/core_bound/vectorization_1.md) |
+| [vectorization_2](TMA/core_bound/vectorization_2/) | 消除依赖链（uint16 → uint32 累加器） | 20.9x | [docs/experiments/core_bound/vectorization_2.md](docs/experiments/core_bound/vectorization_2.md) |
+| [compiler_intrinsics_1](TMA/core_bound/compiler_intrinsics_1/) | SSE4.1 intrinsics（滑动窗口前缀和） | 1.14x | [docs/experiments/core_bound/compiler_intrinsics_1.md](docs/experiments/core_bound/compiler_intrinsics_1.md) |
+| [compiler_intrinsics_2](TMA/core_bound/compiler_intrinsics_2/) | AVX2 intrinsics（批量查找换行符） | 15.1x | [docs/experiments/core_bound/compiler_intrinsics_2.md](docs/experiments/core_bound/compiler_intrinsics_2.md) |
+| [dep_chains_1](TMA/core_bound/dep_chains_1/) | 并行依赖链（M 路链表查找） | 3.6x | [docs/experiments/core_bound/dependency_chains_1.md](docs/experiments/core_bound/dependency_chains_1.md) |
+| [function_inlining_1](TMA/core_bound/function_inlining_1/) | 函数内联（qsort → std::sort + lambda） | 1.63x | [docs/experiments/core_bound/function_inlining_1.md](docs/experiments/core_bound/function_inlining_1.md) |
 
 ### Bad Speculation 分支预测
 
 | 实验 | 优化技术 | 加速比 | 文档 |
 |------|---------|--------|------|
-| [lookup_tables_1](TMA/bad_speculation/lookup_tables_1/) | 查找表替代分支链 | 1.87x | [docs/lookup_tables.md](docs/lookup_tables.md) |
+| [lookup_tables_1](TMA/bad_speculation/lookup_tables_1/) | 查找表替代分支链 | 1.87x | [docs/experiments/bad_speculation/lookup_tables.md](docs/experiments/bad_speculation/lookup_tables.md) |
 
 ### Misc 编译器优化
 
 | 实验 | 优化技术 | 加速比 | 文档 |
 |------|---------|--------|------|
-| [lto](TMA/misc/lto/) | 链接时优化（跨翻译单元内联） | 1.50x | [docs/lto.md](docs/lto.md) |
-| [pgo](TMA/misc/pgo/) | Profile-Guided Optimization | ~1x | [docs/pgo.md](docs/pgo.md) |
-| [warmup](TMA/misc/warmup/) | 算法优化（O(N) → O(1)） | 70x | [docs/warmup.md](docs/warmup.md) | 
+| [lto](TMA/misc/lto/) | 链接时优化（跨翻译单元内联） | 1.50x | [docs/experiments/misc/lto.md](docs/experiments/misc/lto.md) |
+| [pgo](TMA/misc/pgo/) | Profile-Guided Optimization | ~1x | [docs/experiments/misc/pgo.md](docs/experiments/misc/pgo.md) |
+| [warmup](TMA/misc/warmup/) | 算法优化（O(N) → O(1)） | 70x | [docs/experiments/misc/warmup.md](docs/experiments/misc/warmup.md) | 
 
 ## 参考
 
