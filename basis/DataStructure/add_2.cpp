@@ -44,7 +44,7 @@ static void add_int(const int* in3, const int* in4, int* out2, const size_t n) {
 }
 
 int main() {
-    int n = 128;
+    int n = 12800000;
 
     // 分配内存
     float* in1  = (float*)malloc(n * sizeof(float));

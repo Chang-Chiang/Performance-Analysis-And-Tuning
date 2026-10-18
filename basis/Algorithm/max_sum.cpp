@@ -20,7 +20,9 @@
 #include <chrono>
 
 // 辅助函数：返回两个数中的较大值
-int max(int a, int b) { return (a > b) ? a : b; }
+int max(int a, int b) { 
+    return (a > b) ? a : b;
+}
 
 // 暴力求解：遍历所有子数组，计算每个子数组的和
 // 时间复杂度：O(n³)
@@ -133,8 +135,7 @@ int main() {
 
         benchmark("Brute Force", brute_force, arr, n);
         benchmark("Brute Force+", brute_force_opt, arr, n);
-        benchmark(
-            "Divide&Conquer", [](int* x, int n) { return divide_conquer(x, 0, n - 1); }, arr, n);
+        benchmark("Divide&Conquer", [](int* x, int n) { return divide_conquer(x, 0, n - 1); }, arr, n);
         benchmark("Kadane", linear, arr, n);
 
         printf("├──────────────────┼────────┼────────────┼──────────────┤\n");

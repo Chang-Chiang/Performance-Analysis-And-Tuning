@@ -34,9 +34,11 @@ int search_arr(int* num, int cnt, int target) {
 
         if (num[mid] > target) {
             last = mid - 1;
-        } else if (num[mid] < target) {
+        }
+        else if (num[mid] < target) {
             first = mid + 1;
-        } else {
+        }
+        else {
             return 1;  // 查找成功
         }
     }

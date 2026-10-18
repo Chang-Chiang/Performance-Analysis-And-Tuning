@@ -2,8 +2,8 @@
     "tasks": [
         {
             "type": "cppbuild",
-            "label": "C/C++: gcc build active file",
-            "command": "/usr/bin/gcc",
+            "label": "C/C++: g++ build active file (C++)",
+            "command": "/usr/bin/g++",
             "args": [
                 // === 基础选项 ===
                 "-fdiagnostics-color=always",    // 错误信息带颜色
@@ -12,7 +12,7 @@
                 // === 优化选项 (取消注释以启用) ===
                 // "-O0",                       // 不优化，便于调试
                 // "-O1",                       // 基本优化
-                // "-O2",                       // 常规优化 (推荐生产环境)
+                "-O2",                       // 常规优化 (推荐生产环境)
                 // "-O3",                       // 激进优化 (性能测试)
                 // "-Ofast",                    // 最高级别优化 (可能不完全标准兼容)
                 // "-Os",                       // 优化代码大小
@@ -30,6 +30,9 @@
                 // "-mtune=native",             // 针对本机CPU调优
                 // "-mavx2",                    // 启用AVX2指令集
                 // "-mavx512f",                 // 启用AVX-512指令集
+                // "-msse",                     // 启用SSE指令集 (编译器默认开启)
+                // "-msse2",                    // 启用SSE2指令集 (编译器默认开启)
+                // "-msse3",                    // 启用SSE3指令集
 
                 // === 性能分析 ===
                 // "-pg",                       // 生成gprof性能分析数据

@@ -12,7 +12,10 @@ void matrixmulti(int N, int x[n][n], int y[n][n], int z[n][n]) {
     for (k = 0; k < N; k++) {
         for (i = 0; i < N; i++) {
             r = y[i][k];
-            for (j = 0; j < N - 4; j += 4) { // 内层循环展开四次
+
+            // 内层循环展开四次
+            // 访存密集,标量展开未带来收益
+            for (j = 0; j < N - 4; j += 4) {
                 x[i][j] += r * z[k][j];
                 x[i][j + 1] += r * z[k][j + 1];
                 x[i][j + 2] += r * z[k][j + 2];

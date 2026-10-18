@@ -11,18 +11,20 @@
 //   _mm_loadu_ps     — 加载 4 个 float（128 位）
 //   _mm_mul_ps       — 4 个 float 并行乘法
 //   _mm_add_ps       — 4 个 float 并行加法
-//   _mm_hadd_ps      — 水平加法（将 4 个元素两两相加）
+//   _mm_hadd_ps      — 水平加法（将 4 个元素两两相加）【属 SSE3 指令, 需 -msse3】
 //   _mm_store_ss     — 存储 1 个 float
 //
 // SSE 指令说明（double）：
 //   _mm_loadu_pd     — 加载 2 个 double（128 位）
 //   _mm_mul_pd       — 2 个 double 并行乘法
 //   _mm_add_pd       — 2 个 double 并行加法
-//   _mm_hadd_pd      — 水平加法（将 2 个元素相加）
+//   _mm_hadd_pd      — 水平加法（将 2 个元素相加）【属 SSE3 指令, 需 -msse3】
 //   _mm_store_sd     — 存储 1 个 double
 //
 // 编译命令：
-//   g++ -O2 -msse2 -Wall -o mul mul.cpp
+//   g++ -O2 -msse3 -Wall -o mul mul.cpp     // 必须 -msse3 或更高（推荐 -march=native）
+//   原因：_mm_hadd_ps / _mm_hadd_pd 是 SSE3 指令；用 -msse2 会报
+//   “inlining failed ... _mm_hadd_ps: target specific option mismatch”
 
 #include <immintrin.h>
 #include <malloc.h>
